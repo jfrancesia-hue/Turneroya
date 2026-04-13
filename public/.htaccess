@@ -1,0 +1,14 @@
+# Apache: redirigir todo a index.php
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Seguridad
+<FilesMatch "\.(env|log|ini|sh|md|json|lock)$">
+    Require all denied
+</FilesMatch>
+
+Options -Indexes

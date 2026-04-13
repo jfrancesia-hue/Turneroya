@@ -1,0 +1,39 @@
+{
+    "name": "turneroya/app",
+    "description": "TurneroYa - SaaS de gestión de turnos con IA (Claude) para WhatsApp",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.2",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "ext-json": "*",
+        "ext-curl": "*",
+        "ext-mbstring": "*",
+        "vlucas/phpdotenv": "^5.6",
+        "twilio/sdk": "^8.3",
+        "mercadopago/dx-php": "^3.5",
+        "nesbot/carbon": "^3.8",
+        "phpmailer/phpmailer": "^6.9",
+        "ramsey/uuid": "^4.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "TurneroYa\\": "src/"
+        },
+        "files": [
+            "src/Helpers/functions.php"
+        ]
+    },
+    "scripts": {
+        "migrate": "php scripts/migrate.php",
+        "seed": "php scripts/seed.php",
+        "serve": "php -S localhost:8000 -t public",
+        "reminders": "php scripts/reminders_cron.php"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    }
+}

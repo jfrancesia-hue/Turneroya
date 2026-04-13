@@ -1,0 +1,17 @@
+/vendor/
+/node_modules/
+.env
+.env.local
+.env.production
+/storage/logs/*.log
+/storage/sessions/*
+/storage/uploads/*
+!/storage/logs/.gitkeep
+!/storage/sessions/.gitkeep
+!/storage/uploads/.gitkeep
+.idea/
+.vscode/
+*.log
+.DS_Store
+Thumbs.db
+composer.lock
