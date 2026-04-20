@@ -7,8 +7,11 @@ use TurneroYa\Core\Router;
 
 return function (Router $r): void {
 
-    // Landing
+    // Landing + páginas públicas
     $r->get('/', 'HomeController@index');
+    $r->get('/pricing', 'BillingController@pricing');
+    $r->get('/terms', 'LegalController@terms');
+    $r->get('/privacy', 'LegalController@privacy');
 
     // Auth
     $r->group(['middleware' => ['Guest']], function (Router $r) {
@@ -93,5 +96,10 @@ return function (Router $r): void {
         // Settings
         $r->get('/settings', 'SettingsController@index');
         $r->post('/settings', 'SettingsController@save');
+
+        // Billing / Suscripciones
+        $r->get('/billing', 'BillingController@index');
+        $r->post('/billing/subscribe', 'BillingController@subscribe');
+        $r->post('/billing/cancel', 'BillingController@cancel');
     });
 };

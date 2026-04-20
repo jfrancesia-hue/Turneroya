@@ -1,0 +1,115 @@
+# TurneroYa - Render Blueprint
+# Deploy vía: https://dashboard.render.com → New → Blueprint → conectar repo
+#
+# Crea:
+#   - Web Service: turneroya-app (Docker, $7/mo Starter)
+#   - Database:   turneroya-db  (Postgres 16, $7/mo Starter)
+#   - Cron Job:   turneroya-reminders (cada hora)
+
+services:
+  - type: web
+    name: turneroya-app
+    runtime: docker
+    plan: starter
+    region: oregon
+    branch: main
+    healthCheckPath: /
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_TIMEZONE
+        value: America/Argentina/Buenos_Aires
+      - key: APP_URL
+        sync: false   # se setea manual con el dominio definitivo
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: turneroya-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: turneroya-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: turneroya-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: turneroya-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: turneroya-db
+          property: password
+      # Estas deben cargarse manualmente en el Dashboard de Render:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-haiku-4-5-20251001
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false
+      - key: MERCADOPAGO_ACCESS_TOKEN
+        sync: false
+      - key: MERCADOPAGO_PUBLIC_KEY
+        sync: false
+      - key: CRON_SECRET
+        generateValue: true
+      - key: MAIL_DRIVER
+        value: smtp
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        value: noreply@turneroya.app
+      - key: MAIL_FROM_NAME
+        value: TurneroYa
+
+  - type: cron
+    name: turneroya-reminders
+    runtime: docker
+    plan: starter
+    region: oregon
+    branch: main
+    dockerfilePath: ./Dockerfile
+    schedule: "0 * * * *"   # cada hora en punto
+    dockerCommand: php /var/www/html/scripts/reminders_cron.php
+    envVars:
+      - fromGroup: turneroya-shared   # (opcional: reusar env group)
+      - key: DB_HOST
+        fromDatabase:
+          name: turneroya-db
+          property: host
+      - key: DB_DATABASE
+        fromDatabase:
+          name: turneroya-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: turneroya-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: turneroya-db
+          property: password
+
+databases:
+  - name: turneroya-db
+    databaseName: turneroya
+    user: turneroya
+    plan: starter
+    region: oregon
+    postgresMajorVersion: "16"

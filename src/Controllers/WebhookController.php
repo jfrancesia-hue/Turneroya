@@ -48,9 +48,29 @@ final class WebhookController
 
     public function mercadopago(): void
     {
-        // Placeholder — se implementa cuando se active el flujo de depósitos
         $body = file_get_contents('php://input') ?: '';
         error_log('[MercadoPago webhook] ' . $body);
+
+        // MP envía el topic por querystring o por body (según v1/v2 del webhook)
+        $topic = (string) (Request::input('topic') ?? Request::input('type') ?? '');
+        $resourceId = (string) Request::input('id', '');
+
+        if (!$topic || !$resourceId) {
+            $payload = json_decode($body, true);
+            if (is_array($payload)) {
+                $topic = (string) ($payload['type'] ?? $payload['topic'] ?? $topic);
+                $resourceId = (string) ($payload['data']['id'] ?? $payload['id'] ?? $resourceId);
+            }
+        }
+
+        if ($topic && $resourceId) {
+            try {
+                (new \TurneroYa\Services\SubscriptionService())->handleWebhook($topic, $resourceId);
+            } catch (\Throwable $e) {
+                error_log('[MP webhook subscription handler] ' . $e->getMessage());
+            }
+        }
+
         json_response(['received' => true]);
     }
 

@@ -555,16 +555,29 @@
 
             <?php
             $cols = [
-                'Producto' => ['Funcionalidades','Precios','Bot WhatsApp','Integraciones','Changelog'],
-                'Empresa' => ['Sobre nosotros','Clientes','Blog','Trabaja con nosotros','Contacto'],
-                'Soporte' => ['Documentación','Centro de ayuda','Estado del sistema','Términos','Privacidad'],
+                'Producto' => [
+                    ['Funcionalidades', '/#features'],
+                    ['Precios', '/pricing'],
+                    ['Bot WhatsApp', '/#features'],
+                    ['Para quién', '/#industries'],
+                ],
+                'Empresa' => [
+                    ['Sobre nosotros', '#'],
+                    ['Clientes', '/#testimonials'],
+                    ['Contacto', 'mailto:hola@turneroya.app'],
+                ],
+                'Legal' => [
+                    ['Términos y Condiciones', '/terms'],
+                    ['Política de Privacidad', '/privacy'],
+                    ['Soporte', 'mailto:soporte@turneroya.app'],
+                ],
             ];
             foreach ($cols as $col => $links): ?>
                 <div>
                     <div class="text-xs font-bold uppercase tracking-wider text-white mb-4"><?= e($col) ?></div>
                     <ul class="space-y-3 text-sm">
-                        <?php foreach ($links as $l): ?>
-                            <li><a href="#" class="hover:text-white transition"><?= e($l) ?></a></li>
+                        <?php foreach ($links as [$label, $href]): ?>
+                            <li><a href="<?= e($href) ?>" class="hover:text-white transition"><?= e($label) ?></a></li>
                         <?php endforeach; ?>
                     </ul>
                 </div>

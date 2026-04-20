@@ -44,6 +44,7 @@
                     ['/dashboard/analytics', 'Analytics', 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'],
                     ['/dashboard/bot/config', 'Bot WhatsApp', 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z', 'AI'],
                     ['/dashboard/settings', 'Ajustes', 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z'],
+                    ['/dashboard/billing', 'Facturación', 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
                 ],
             ];
             ?>
@@ -75,18 +76,43 @@
             <?php endforeach; ?>
         </nav>
 
-        <!-- Bottom: upgrade card -->
+        <!-- Bottom: upgrade card (dinámico según plan) -->
+        <?php
+        $currentPlan = null;
+        $currentSub = null;
+        if (\TurneroYa\Core\Auth::businessId()) {
+            try {
+                $currentPlan = \TurneroYa\Models\Subscription::currentPlanFor(\TurneroYa\Core\Auth::businessId());
+                $currentSub = \TurneroYa\Models\Subscription::activeForBusiness(\TurneroYa\Core\Auth::businessId());
+            } catch (\Throwable $e) { /* tablas aún no migradas */ }
+        }
+        $planName = $currentPlan['name'] ?? 'Free';
+        $showUpgrade = !$currentPlan || ($currentPlan['id'] ?? 'FREE') !== 'NEGOCIO' && ($currentPlan['id'] ?? 'FREE') !== 'MULTI_SUCURSAL';
+        ?>
         <div class="p-4 border-t border-ink-200/70">
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-accent-700 p-4 text-white">
-                <div class="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                <div class="relative">
-                    <div class="text-xs font-bold uppercase tracking-wider opacity-80">Plan Starter</div>
-                    <div class="mt-1 text-sm font-semibold">Desbloqueá el Bot IA</div>
-                    <button class="mt-3 w-full px-3 py-1.5 bg-white text-brand-700 rounded-lg text-xs font-bold hover:bg-brand-50 transition">
-                        Upgrade →
-                    </button>
-                </div>
-            </div>
+            <?php if ($showUpgrade): ?>
+                <a href="/dashboard/billing" class="block relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-accent-700 p-4 text-white hover:shadow-brand transition">
+                    <div class="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+                    <div class="relative">
+                        <div class="text-xs font-bold uppercase tracking-wider opacity-80">Plan <?= e($planName) ?></div>
+                        <div class="mt-1 text-sm font-semibold">
+                            <?php if (($currentSub['status'] ?? '') === 'TRIALING'): ?>
+                                Prueba activa
+                            <?php else: ?>
+                                Desbloqueá el Bot IA
+                            <?php endif; ?>
+                        </div>
+                        <div class="mt-3 w-full text-center px-3 py-1.5 bg-white text-brand-700 rounded-lg text-xs font-bold">
+                            Upgrade →
+                        </div>
+                    </div>
+                </a>
+            <?php else: ?>
+                <a href="/dashboard/billing" class="block rounded-2xl border border-ink-200 p-4 hover:bg-ink-50 transition">
+                    <div class="text-xs font-bold uppercase tracking-wider text-ink-500">Plan <?= e($planName) ?></div>
+                    <div class="mt-1 text-sm font-semibold text-ink-900">Gestionar facturación</div>
+                </a>
+            <?php endif; ?>
         </div>
     </aside>
 
