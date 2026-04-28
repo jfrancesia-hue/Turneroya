@@ -64,6 +64,19 @@ final class WebhookController
             return;
         }
 
+        // Si vino un ButtonPayload (quick reply), procesarlo determinísticamente
+        // ANTES de invocar al bot — así apretar un botón es instantáneo y barato.
+        $buttonPayload = (string) Request::input('ButtonPayload', '');
+        if ($buttonPayload !== '') {
+            $reply = $this->handleButtonPayload($business['id'], (string) $fromNumber, $buttonPayload);
+            if ($reply !== null) {
+                if ($messageSid !== '') WebhookIdempotency::markProcessed('twilio', $messageSid);
+                $this->twiml($reply);
+                return;
+            }
+            // Si el payload no era nuestro → caer al bot normal
+        }
+
         try {
             $bot = new BotEngine($business['id']);
             $reply = $bot->handleMessage((string) $fromNumber, $body);
@@ -74,6 +87,54 @@ final class WebhookController
 
         if ($messageSid !== '') WebhookIdempotency::markProcessed('twilio', $messageSid);
         $this->twiml($reply);
+    }
+
+    /**
+     * Procesa un ButtonPayload de WhatsApp (quick reply de un Content Template).
+     * Devuelve el texto a responder, o null si el payload no es nuestro.
+     */
+    private function handleButtonPayload(string $businessId, string $whatsappNumber, string $payload): ?string
+    {
+        $parsed = \TurneroYa\Services\WhatsAppButtonPayloads::parse($payload);
+        if ($parsed === null) return null;
+
+        $bookingId = $parsed['booking_id'];
+        $booking = \TurneroYa\Models\Booking::find($bookingId);
+        if (!$booking || $booking['business_id'] !== $businessId) {
+            return 'No encontré ese turno. ¿Querés que te ayude de otra forma?';
+        }
+
+        // Verificar que el cliente del booking matchee con el número que escribe
+        $client = \TurneroYa\Models\Client::findByPhoneOrWhatsapp($businessId, $whatsappNumber);
+        if (!$client || $client['id'] !== $booking['client_id']) {
+            return 'Este turno no parece ser tuyo. Si pensás que es un error, avisanos.';
+        }
+
+        $service = new \TurneroYa\Services\BookingService($businessId);
+
+        return match ($parsed['action']) {
+            \TurneroYa\Services\WhatsAppButtonPayloads::ACTION_CONFIRM => $this->handleConfirm($bookingId),
+            \TurneroYa\Services\WhatsAppButtonPayloads::ACTION_CANCEL => $this->handleCancelViaButton($service, $bookingId),
+            \TurneroYa\Services\WhatsAppButtonPayloads::ACTION_RESCHEDULE => $this->handleRescheduleHint($booking),
+            default => null,
+        };
+    }
+
+    private function handleConfirm(string $bookingId): string
+    {
+        \TurneroYa\Models\Booking::updateStatus($bookingId, 'CONFIRMED');
+        return '¡Listo! Tu turno quedó confirmado. Nos vemos. ✅';
+    }
+
+    private function handleCancelViaButton(\TurneroYa\Services\BookingService $service, string $bookingId): string
+    {
+        $service->cancel($bookingId, 'Cancelado por cliente desde botón WhatsApp');
+        return 'Cancelé tu turno. Cuando quieras sacar uno nuevo, escribinos. 👋';
+    }
+
+    private function handleRescheduleHint(array $booking): string
+    {
+        return 'Para reagendar, decime qué día y hora te queda mejor. Por ejemplo: "el martes a las 15hs" y te ofrezco horarios disponibles.';
     }
 
     public function mercadopago(): void

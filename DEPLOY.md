@@ -159,3 +159,23 @@ docker compose exec app php scripts/seed.php   # datos demo
 - **Errores:** revisar logs de Render / `storage/logs/`
 - **DB:** Render Dashboard → Metrics (conexiones, CPU, storage)
 - **Costos MP:** mercadopago.com.ar → Ventas → Suscripciones
+
+---
+
+## Botones interactivos WhatsApp (opcional)
+
+Para que recordatorios y confirmaciones lleguen con botones (Confirmar / Cancelar / Reagendar), creá Content Templates en Twilio Console y aprobalos en Meta:
+
+1. Ir a Twilio Console → Content Builder → Create Content
+2. Tipo: **Quick Reply** (3 botones máx por mensaje)
+3. Plantilla del recordatorio (ejemplo):
+   - Body: `¡Hola {{1}}! Te recordamos tu turno en {{2}} el {{3}} a las {{4}} ({{5}}). ¿Lo confirmás?`
+   - Botones (con sus payloads custom):
+     - Texto: "✅ Confirmar" → Payload (vendrá en `ButtonPayload`): `{{6}}`
+     - Texto: "❌ Cancelar" → Payload: `{{7}}`
+     - Texto: "🔄 Reagendar" → Payload: `{{8}}`
+4. Submit for WhatsApp Approval (puede tardar 24-72hs).
+5. Una vez aprobado, copiá el `HX...` SID y configurá `TWILIO_REMINDER_CONTENT_SID` en el .env.
+6. Idem para confirmación con plantilla similar (sin botón confirmar, sólo cancel y reschedule).
+
+Si los SIDs están vacíos, los mensajes salen como texto plano (sin botones) — funcional pero sin la conversión que dan los botones.

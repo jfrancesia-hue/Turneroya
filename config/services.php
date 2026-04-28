@@ -12,6 +12,8 @@ return [
         'auth_token' => env('TWILIO_AUTH_TOKEN'),
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
         'validate_signature' => filter_var(env('TWILIO_VALIDATE_SIGNATURE', 'true'), FILTER_VALIDATE_BOOLEAN),
+        'reminder_content_sid' => env('TWILIO_REMINDER_CONTENT_SID', ''),
+        'confirmation_content_sid' => env('TWILIO_CONFIRMATION_CONTENT_SID', ''),
     ],
     'mercadopago' => [
         'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
