@@ -154,8 +154,11 @@ final class BookingService
         if ($expiresMinutes <= 0) $expiresMinutes = 15;
         $expiresAt = (new DateTimeImmutable('now', $tz))->add(new DateInterval('PT' . $expiresMinutes . 'M'));
 
-        return Database::transaction(function () use ($payload, $start, $end, $service, $expiresAt) {
-            $bookingId = Booking::create([
+        // Paso 1: crear booking PENDING_PAYMENT en una transacción corta.
+        // El call HTTP a MP queda fuera para no bloquear el slot durante 10-30s
+        // si la API de MP está lenta.
+        $bookingId = Database::transaction(function () use ($payload, $start, $end, $service, $expiresAt) {
+            $id = Booking::create([
                 'business_id' => $this->businessId,
                 'client_id' => $payload['client_id'],
                 'service_id' => $payload['service_id'],
@@ -170,35 +173,52 @@ final class BookingService
                 'payment_expires_at' => $expiresAt->format('c'),
             ]);
 
-            // Crear preference MP. Si falla, se aborta la transacción y no
-            // queda un booking PENDING_PAYMENT sin link de pago.
-            $initPoint = (new MercadoPagoService())->createDepositPreference($bookingId);
-            if ($initPoint === '') {
-                throw new \RuntimeException('No se pudo generar el link de pago. Probá de nuevo.');
-            }
-            Booking::update($bookingId, ['payment_init_point' => $initPoint]);
-
             Database::insert('booking_analytics', [
                 'business_id' => $this->businessId,
                 'type' => 'booking_pending_payment',
                 'metadata' => json_encode([
-                    'booking_id' => $bookingId,
+                    'booking_id' => $id,
                     'source' => $payload['source'] ?? 'WEB',
                     'service_id' => $payload['service_id'],
                     'amount' => (float) $service['deposit_amount'],
                 ]),
             ]);
 
-            $row = Database::fetchOne('SELECT booking_number FROM bookings WHERE id = :id', ['id' => $bookingId]);
-            return [
-                'id' => $bookingId,
-                'number' => (int) ($row['booking_number'] ?? 0),
-                'requires_payment' => true,
-                'payment_url' => $initPoint,
-                'expires_at' => $expiresAt->format('c'),
-                'deposit_amount' => (float) $service['deposit_amount'],
-            ];
+            return $id;
         });
+
+        // Paso 2: crear preference MP fuera de la transacción.
+        // Si MP falla, cancelamos el booking para liberar el slot.
+        try {
+            $initPoint = (new MercadoPagoService())->createDepositPreference($bookingId);
+            if ($initPoint === '') {
+                throw new \RuntimeException('No se pudo generar el link de pago.');
+            }
+        } catch (\Throwable $e) {
+            Booking::updateStatus($bookingId, 'CANCELLED');
+            Database::insert('booking_analytics', [
+                'business_id' => $this->businessId,
+                'type' => 'booking_payment_setup_failed',
+                'metadata' => json_encode([
+                    'booking_id' => $bookingId,
+                    'error' => $e->getMessage(),
+                ]),
+            ]);
+            throw new \RuntimeException('No se pudo iniciar el pago: ' . $e->getMessage(), 0, $e);
+        }
+
+        // Paso 3: guardar el init_point
+        Booking::update($bookingId, ['payment_init_point' => $initPoint]);
+
+        $row = Database::fetchOne('SELECT booking_number FROM bookings WHERE id = :id', ['id' => $bookingId]);
+        return [
+            'id' => $bookingId,
+            'number' => (int) ($row['booking_number'] ?? 0),
+            'requires_payment' => true,
+            'payment_url' => $initPoint,
+            'expires_at' => $expiresAt->format('c'),
+            'deposit_amount' => (float) $service['deposit_amount'],
+        ];
     }
 
     /**
@@ -229,6 +249,24 @@ final class BookingService
                     'metadata' => json_encode(['booking_id' => $row['id']]),
                 ]);
                 $count++;
+                // Avisar al cliente que su reserva expiró (best-effort)
+                try {
+                    $booking = Booking::findWithRelations($row['id']);
+                    if ($booking) {
+                        $business = Business::find($this->businessId);
+                        $to = $booking['client_whatsapp'] ?? $booking['client_phone'] ?? '';
+                        if ($to && $business) {
+                            $bookingUrl = url('/book/' . $business['slug']);
+                            $msg = "👋 ¡Hola {$booking['client_name']}!\n\n"
+                                 . "Tu reserva en *{$business['name']}* expiró sin confirmar el pago.\n"
+                                 . "Si querés sacar un turno nuevo, entrá acá:\n"
+                                 . $bookingUrl;
+                            (new NotificationService())->sendWhatsApp($to, $msg);
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    error_log('[BookingService::expirePendingPayments] notify failed: ' . $e->getMessage());
+                }
                 // Disparar waitlist sobre el slot recién liberado (best-effort)
                 try {
                     (new WaitlistService($this->businessId))->notifyOnSlotFreed($row['id']);

@@ -87,6 +87,25 @@ final class WaitlistEntry
         );
     }
 
+    /**
+     * CAS atómico: intenta marcar la entry como NOTIFIED solo si sigue PENDING.
+     * Devuelve true si esta llamada ganó la carrera; false si otro proceso ya
+     * la notificó (en cuyo caso el caller debe skipear el envío).
+     */
+    public static function tryClaim(string $id, ?string $hintBookingId = null): bool
+    {
+        $stmt = Database::query(
+            "UPDATE waitlist_entries
+                SET status = 'NOTIFIED',
+                    notified_at = NOW(),
+                    notified_booking_id = :hint,
+                    updated_at = NOW()
+              WHERE id = :id AND status = 'PENDING'",
+            ['id' => $id, 'hint' => $hintBookingId]
+        );
+        return $stmt->rowCount() > 0;
+    }
+
     public static function markConverted(string $id): void
     {
         Database::query(

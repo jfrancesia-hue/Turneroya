@@ -71,6 +71,33 @@ final class MercadoPagoService
      */
     public function markDepositPaid(string $bookingId, ?string $mpPaymentId = null): void
     {
+        $booking = Booking::find($bookingId);
+        if (!$booking) return;
+
+        // Si el booking ya fue cancelado (cron de expiración o cancel manual),
+        // NO revivirlo: el slot puede haber sido tomado por otro o por waitlist.
+        if ($booking['status'] === 'CANCELLED') {
+            error_log(sprintf(
+                '[MercadoPagoService] Pago tardío detectado en booking %s (status=CANCELLED). Pago MP %s. TODO: refund automático.',
+                $bookingId,
+                $mpPaymentId ?? 'unknown'
+            ));
+            // Guardamos el deposit_mp_id por si manualmente refundean
+            Booking::update($bookingId, ['deposit_mp_id' => $mpPaymentId]);
+            return;
+        }
+
+        // Solo confirmar si está esperando pago (idempotencia: evita reprocesar
+        // webhooks duplicados que ya fueron marcados CONFIRMED).
+        if ($booking['status'] !== 'PENDING_PAYMENT') {
+            // Ya CONFIRMED u otro estado: actualizar mp_id pero no cambiar status
+            Booking::update($bookingId, [
+                'deposit_paid' => true,
+                'deposit_mp_id' => $mpPaymentId,
+            ]);
+            return;
+        }
+
         Booking::update($bookingId, [
             'deposit_paid' => true,
             'deposit_mp_id' => $mpPaymentId,

@@ -98,9 +98,11 @@ final class WaitlistService
         );
         if (!$entry) return null;
 
-        // Marcar notificado primero (idempotencia: si el envío de WhatsApp
-        // falla, no reintentamos en otro cancel).
-        WaitlistEntry::markNotified($entry['id'], $hintBookingId);
+        // CAS atómico: solo notificar si la entry sigue en PENDING.
+        // Si otro proceso ganó la carrera (dos cancels concurrentes), devuelve
+        // false → skipear el envío para no notificar dos veces al mismo cliente.
+        $claimed = WaitlistEntry::tryClaim($entry['id'], $hintBookingId);
+        if (!$claimed) return null;
 
         $this->sendNotification($entry, $serviceId, $date, $startTime);
 

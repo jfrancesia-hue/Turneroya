@@ -286,8 +286,8 @@ PROMPT;
                 'find_available_slots' => $this->toolFindSlots($input),
                 'create_booking' => $this->toolCreateBooking($input, $whatsappNumber),
                 'get_client_bookings' => $this->toolGetClientBookings($whatsappNumber),
-                'cancel_booking' => $this->toolCancelBooking((string) ($input['booking_id'] ?? '')),
-                'reschedule_booking' => $this->toolRescheduleBooking($input),
+                'cancel_booking' => $this->toolCancelBooking((string) ($input['booking_id'] ?? ''), $whatsappNumber),
+                'reschedule_booking' => $this->toolRescheduleBooking($input, $whatsappNumber),
                 'add_to_waitlist' => $this->toolAddToWaitlist($input, $whatsappNumber),
                 default => ['error' => 'Tool desconocida: ' . $name],
             };
@@ -404,14 +404,25 @@ PROMPT;
         ];
     }
 
-    private function toolCancelBooking(string $bookingId): array
+    private function toolCancelBooking(string $bookingId, string $whatsappNumber): array
     {
+        $client = Client::findByPhoneOrWhatsapp($this->businessId, $whatsappNumber);
+        if (!$client) return ['error' => 'No te tengo registrado para cancelar turnos.'];
+
+        $booking = Booking::find($bookingId);
+        if (!$booking || $booking['business_id'] !== $this->businessId) {
+            return ['error' => 'Turno no encontrado'];
+        }
+        if ($booking['client_id'] !== $client['id']) {
+            return ['error' => 'Ese turno no es tuyo.'];
+        }
+
         $service = new BookingService($this->businessId);
         $service->cancel($bookingId, 'Cancelado por bot');
         return ['success' => true];
     }
 
-    private function toolRescheduleBooking(array $input): array
+    private function toolRescheduleBooking(array $input, string $whatsappNumber): array
     {
         $bookingId = (string) ($input['booking_id'] ?? '');
         $newDate = (string) ($input['new_date'] ?? '');
@@ -421,10 +432,16 @@ PROMPT;
             return ['error' => 'Faltan datos: booking_id, new_date o new_start_time'];
         }
 
+        $client = Client::findByPhoneOrWhatsapp($this->businessId, $whatsappNumber);
+        if (!$client) return ['error' => 'No te tengo registrado para reagendar turnos.'];
+
         // Verificar que el booking existe y pertenece al negocio antes de tocarlo
         $booking = Booking::find($bookingId);
         if (!$booking || $booking['business_id'] !== $this->businessId) {
             return ['error' => 'Turno no encontrado'];
+        }
+        if ($booking['client_id'] !== $client['id']) {
+            return ['error' => 'Ese turno no es tuyo.'];
         }
         if (!in_array($booking['status'], ['PENDING', 'CONFIRMED'], true)) {
             return ['error' => 'Solo se pueden reagendar turnos confirmados o pendientes'];

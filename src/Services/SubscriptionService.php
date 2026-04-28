@@ -133,6 +133,11 @@ final class SubscriptionService
         // Si el external_reference apunta a un booking, es un pago de seña.
         $booking = \TurneroYa\Models\Booking::find($extRef);
         if ($booking) {
+            // Solo procesar si está esperando pago (evita acciones idempotentes
+            // sobre bookings ya CONFIRMED/CANCELLED). Defensa "primera línea":
+            // markDepositPaid también valida internamente como última línea.
+            if ($booking['status'] !== 'PENDING_PAYMENT') return;
+
             $status = (string) ($payment['status'] ?? '');
             if ($status === 'approved') {
                 (new \TurneroYa\Services\MercadoPagoService())->markDepositPaid($extRef, (string) $payment['id']);
