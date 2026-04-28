@@ -19,6 +19,7 @@ use TurneroYa\Models\BotConversation;
  *  - find_available_slots: buscar próximos slots libres
  *  - create_booking: crear el turno
  *  - cancel_booking: cancelar turno por número
+ *  - reschedule_booking: reagendar turno existente
  *  - get_client_bookings: ver turnos del cliente
  */
 final class BotEngine
@@ -157,9 +158,11 @@ Reglas importantes:
 - NUNCA inventes servicios, profesionales, horarios ni precios. Siempre usá las tools.
 - Cuando el cliente no da nombre, el número de WhatsApp ya lo identifica (lo manejás automáticamente).
 - Si el cliente pide cancelar, usá get_client_bookings para mostrar los próximos y luego cancel_booking.
+- Si el cliente pide reprogramar/cambiar/reagendar, usá get_client_bookings para identificar el turno, después find_available_slots con el mismo service_id para mostrar nuevos horarios, y cuando confirme usá reschedule_booking con el booking_id original y los nuevos date+start_time.
 - Formateá las fechas amigablemente: "martes 5/3 a las 15:30".
 - Si el cliente pide algo fuera de tu alcance (consultas médicas, precios especiales, etc.), derivá a que llame al negocio.
 - NUNCA menciones que sos una IA ni que usás tools. Actuá como un asistente real del negocio.
+- Para reagendar, NO crees un booking nuevo + cancel — usá reschedule_booking que mantiene el mismo booking_id (mejor trazabilidad y no perdés el lugar si falla la creación nueva).
 
 {$welcome}
 PROMPT;
@@ -237,6 +240,19 @@ PROMPT;
                     'required' => ['booking_id'],
                 ],
             ],
+            [
+                'name' => 'reschedule_booking',
+                'description' => 'Reagenda un turno existente a una nueva fecha y horario. Antes de llamar esta tool, asegurate de que el cliente confirmó el cambio y de haber consultado find_available_slots para verificar que el horario nuevo está libre.',
+                'input_schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'booking_id' => ['type' => 'string', 'description' => 'ID del turno a reagendar (obtenido desde get_client_bookings)'],
+                        'new_date' => ['type' => 'string', 'description' => 'Nueva fecha en formato YYYY-MM-DD'],
+                        'new_start_time' => ['type' => 'string', 'description' => 'Nueva hora en formato HH:MM'],
+                    ],
+                    'required' => ['booking_id', 'new_date', 'new_start_time'],
+                ],
+            ],
         ];
     }
 
@@ -253,6 +269,7 @@ PROMPT;
                 'create_booking' => $this->toolCreateBooking($input, $whatsappNumber),
                 'get_client_bookings' => $this->toolGetClientBookings($whatsappNumber),
                 'cancel_booking' => $this->toolCancelBooking((string) ($input['booking_id'] ?? '')),
+                'reschedule_booking' => $this->toolRescheduleBooking($input),
                 default => ['error' => 'Tool desconocida: ' . $name],
             };
         } catch (\Throwable $e) {
@@ -355,5 +372,35 @@ PROMPT;
         $service = new BookingService($this->businessId);
         $service->cancel($bookingId, 'Cancelado por bot');
         return ['success' => true];
+    }
+
+    private function toolRescheduleBooking(array $input): array
+    {
+        $bookingId = (string) ($input['booking_id'] ?? '');
+        $newDate = (string) ($input['new_date'] ?? '');
+        $newStartTime = (string) ($input['new_start_time'] ?? '');
+
+        if ($bookingId === '' || $newDate === '' || $newStartTime === '') {
+            return ['error' => 'Faltan datos: booking_id, new_date o new_start_time'];
+        }
+
+        // Verificar que el booking existe y pertenece al negocio antes de tocarlo
+        $booking = Booking::find($bookingId);
+        if (!$booking || $booking['business_id'] !== $this->businessId) {
+            return ['error' => 'Turno no encontrado'];
+        }
+        if (!in_array($booking['status'], ['PENDING', 'CONFIRMED'], true)) {
+            return ['error' => 'Solo se pueden reagendar turnos confirmados o pendientes'];
+        }
+
+        $service = new BookingService($this->businessId);
+        $service->reschedule($bookingId, $newDate, $newStartTime);
+
+        return [
+            'success' => true,
+            'booking_id' => $bookingId,
+            'new_date' => $newDate,
+            'new_start_time' => $newStartTime,
+        ];
     }
 }
