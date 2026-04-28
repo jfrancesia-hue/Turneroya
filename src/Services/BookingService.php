@@ -21,8 +21,23 @@ final class BookingService
     public function __construct(private readonly string $businessId) {}
 
     /**
+     * Helper puro: ¿este servicio + payload requiere cobro de seña?
+     * Extraído para poder testear los edge cases sin DB.
+     */
+    public static function shouldRequireDeposit(array $service, array $payload): bool
+    {
+        if (!empty($payload['skip_deposit'])) return false;
+        if (empty($service['requires_deposit'])) return false;
+        if (empty($service['deposit_amount']) || (float) $service['deposit_amount'] <= 0) return false;
+        return true;
+    }
+
+    /**
      * Crea un booking validando el slot contra el SlotCalculator.
-     * @return array{id:string, number:int} id del booking y booking_number
+     * Si el servicio requiere seña, el booking queda en PENDING_PAYMENT
+     * con un link de pago de MP y vencimiento de 15 minutos por default.
+     *
+     * @return array{id:string, number:int} (más campos cuando requires_payment)
      * @throws \RuntimeException si el slot ya no está disponible
      */
     public function createBooking(array $payload): array
@@ -40,6 +55,19 @@ final class BookingService
         }
 
         $duration = (int) $service['duration'];
+
+        if (self::shouldRequireDeposit($service, $payload)) {
+            return $this->createBookingWithDeposit($payload, $service, $duration);
+        }
+
+        return $this->createBookingDirect($payload, $service, $duration);
+    }
+
+    /**
+     * Crea el booking de forma directa (sin cobro previo de seña).
+     */
+    private function createBookingDirect(array $payload, array $service, int $duration): array
+    {
         $calculator = new SlotCalculator($this->businessId);
 
         // Re-chequeo de disponibilidad (idempotente contra race conditions)
@@ -94,6 +122,124 @@ final class BookingService
                 'number' => (int) ($row['booking_number'] ?? 0),
             ];
         });
+    }
+
+    /**
+     * Crea el booking en estado PENDING_PAYMENT y devuelve el link de MP.
+     * Si la creación de la preference de MP falla, la transacción se aborta
+     * y no quedan bookings huérfanos.
+     */
+    private function createBookingWithDeposit(array $payload, array $service, int $duration): array
+    {
+        $calculator = new SlotCalculator($this->businessId);
+        if (!$calculator->isSlotAvailable(
+            (string) $payload['date'],
+            (string) $payload['start_time'],
+            $duration,
+            (string) $payload['professional_id']
+        )) {
+            throw new \RuntimeException('Ese horario ya no está disponible. Elegí otro.');
+        }
+
+        $tz = new DateTimeZone('America/Argentina/Buenos_Aires');
+        $start = DateTimeImmutable::createFromFormat(
+            '!Y-m-d H:i',
+            $payload['date'] . ' ' . $payload['start_time'],
+            $tz
+        );
+        if (!$start) throw new \RuntimeException('Fecha/hora inválida');
+        $end = $start->add(new DateInterval('PT' . $duration . 'M'));
+
+        $expiresMinutes = (int) (config('services.payment.expiration_minutes', 15));
+        if ($expiresMinutes <= 0) $expiresMinutes = 15;
+        $expiresAt = (new DateTimeImmutable('now', $tz))->add(new DateInterval('PT' . $expiresMinutes . 'M'));
+
+        return Database::transaction(function () use ($payload, $start, $end, $service, $expiresAt) {
+            $bookingId = Booking::create([
+                'business_id' => $this->businessId,
+                'client_id' => $payload['client_id'],
+                'service_id' => $payload['service_id'],
+                'professional_id' => $payload['professional_id'] ?: null,
+                'date' => $start->format('Y-m-d'),
+                'start_time' => $start->format('H:i'),
+                'end_time' => $end->format('H:i'),
+                'status' => 'PENDING_PAYMENT',
+                'source' => $payload['source'] ?? 'WEB',
+                'notes' => $payload['notes'] ?? null,
+                'price' => $service['price'] ?? null,
+                'payment_expires_at' => $expiresAt->format('c'),
+            ]);
+
+            // Crear preference MP. Si falla, se aborta la transacción y no
+            // queda un booking PENDING_PAYMENT sin link de pago.
+            $initPoint = (new MercadoPagoService())->createDepositPreference($bookingId);
+            if ($initPoint === '') {
+                throw new \RuntimeException('No se pudo generar el link de pago. Probá de nuevo.');
+            }
+            Booking::update($bookingId, ['payment_init_point' => $initPoint]);
+
+            Database::insert('booking_analytics', [
+                'business_id' => $this->businessId,
+                'type' => 'booking_pending_payment',
+                'metadata' => json_encode([
+                    'booking_id' => $bookingId,
+                    'source' => $payload['source'] ?? 'WEB',
+                    'service_id' => $payload['service_id'],
+                    'amount' => (float) $service['deposit_amount'],
+                ]),
+            ]);
+
+            $row = Database::fetchOne('SELECT booking_number FROM bookings WHERE id = :id', ['id' => $bookingId]);
+            return [
+                'id' => $bookingId,
+                'number' => (int) ($row['booking_number'] ?? 0),
+                'requires_payment' => true,
+                'payment_url' => $initPoint,
+                'expires_at' => $expiresAt->format('c'),
+                'deposit_amount' => (float) $service['deposit_amount'],
+            ];
+        });
+    }
+
+    /**
+     * Cancela bookings con status PENDING_PAYMENT que pasaron su payment_expires_at.
+     * Dispara waitlist sobre cada slot recién liberado (best-effort).
+     *
+     * @return int cantidad de bookings expirados
+     */
+    public function expirePendingPayments(): int
+    {
+        $expired = Database::fetchAll(
+            "SELECT id FROM bookings
+             WHERE business_id = :biz
+               AND status = 'PENDING_PAYMENT'
+               AND payment_expires_at < NOW()
+             ORDER BY payment_expires_at ASC
+             LIMIT 100",
+            ['biz' => $this->businessId]
+        );
+
+        $count = 0;
+        foreach ($expired as $row) {
+            try {
+                Booking::updateStatus($row['id'], 'CANCELLED');
+                Database::insert('booking_analytics', [
+                    'business_id' => $this->businessId,
+                    'type' => 'booking_payment_expired',
+                    'metadata' => json_encode(['booking_id' => $row['id']]),
+                ]);
+                $count++;
+                // Disparar waitlist sobre el slot recién liberado (best-effort)
+                try {
+                    (new WaitlistService($this->businessId))->notifyOnSlotFreed($row['id']);
+                } catch (\Throwable $e) {
+                    error_log('[BookingService::expirePendingPayments] waitlist: ' . $e->getMessage());
+                }
+            } catch (\Throwable $e) {
+                error_log('[BookingService::expirePendingPayments] ' . $e->getMessage());
+            }
+        }
+        return $count;
     }
 
     public function cancel(string $bookingId, string $reason = ''): void

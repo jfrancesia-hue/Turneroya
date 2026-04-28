@@ -38,6 +38,7 @@
         "seed": "php scripts/seed.php",
         "serve": "php -S localhost:8000 -t public",
         "reminders": "php scripts/reminders_cron.php",
+        "expire-payments": "php scripts/expire_pending_payments.php",
         "cleanup": "php scripts/cleanup_old_records.php",
         "test": "phpunit"
     },

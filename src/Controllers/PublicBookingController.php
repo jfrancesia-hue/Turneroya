@@ -116,6 +116,23 @@ final class PublicBookingController
                 'auto_confirm' => !$business['require_confirmation'],
             ]);
 
+            // Si el servicio requiere seña, NO mandamos confirmación todavía
+            // (la confirmación va cuando el pago llegue por webhook). Devolvemos
+            // la URL de MP para que el cliente sea redirigido a pagar.
+            if (!empty($result['requires_payment'])) {
+                json_response([
+                    'success' => true,
+                    'requires_payment' => true,
+                    'booking_id' => $result['id'],
+                    'booking_number' => $result['number'],
+                    'payment_url' => $result['payment_url'],
+                    'expires_at' => $result['expires_at'],
+                    'deposit_amount' => $result['deposit_amount'],
+                    'redirect' => $result['payment_url'],
+                ]);
+                return;
+            }
+
             // Enviar notificación de confirmación (best-effort, no bloqueante)
             try {
                 (new NotificationService())->sendBookingConfirmation($result['id']);

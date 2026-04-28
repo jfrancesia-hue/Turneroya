@@ -33,4 +33,7 @@ return [
     'cron' => [
         'secret' => env('CRON_SECRET', ''),
     ],
+    'payment' => [
+        'expiration_minutes' => (int) env('PAYMENT_EXPIRATION_MINUTES', 15),
+    ],
 ];

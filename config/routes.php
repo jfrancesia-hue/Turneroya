@@ -39,6 +39,7 @@ return function (Router $r): void {
     // Cron (requiere secret) — rate-limited a 10 req/min por IP
     $r->group(['middleware' => ['CronRateLimit']], function (Router $r) {
         $r->get('/api/reminders/cron', 'CronController@reminders');
+        $r->get('/api/payments/expire', 'CronController@expirePayments');
     });
 
     // Dashboard (requiere auth)

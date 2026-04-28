@@ -110,10 +110,44 @@ final class SubscriptionService
         }
 
         if ($topic === 'payment') {
-            // Ya lo maneja MercadoPagoService::markDepositPaid para señas.
-            // Aquí podríamos diferenciar por external_reference.
+            $this->handlePaymentEvent($resourceId);
             return;
         }
+    }
+
+    /**
+     * Procesa un evento topic=payment: si el external_reference matchea un
+     * booking_id, lo trata como pago de seña; si no, lo ignora.
+     */
+    private function handlePaymentEvent(string $paymentId): void
+    {
+        $token = $this->mpAccessToken();
+        if (!$token) return;
+
+        $payment = $this->httpGet(self::MP_API_BASE . '/v1/payments/' . $paymentId, $token);
+        if (!$payment) return;
+
+        $extRef = (string) ($payment['external_reference'] ?? '');
+        if ($extRef === '') return;
+
+        // Si el external_reference apunta a un booking, es un pago de seña.
+        $booking = \TurneroYa\Models\Booking::find($extRef);
+        if ($booking) {
+            $status = (string) ($payment['status'] ?? '');
+            if ($status === 'approved') {
+                (new \TurneroYa\Services\MercadoPagoService())->markDepositPaid($extRef, (string) $payment['id']);
+            } elseif (in_array($status, ['rejected', 'cancelled', 'refunded'], true)) {
+                \TurneroYa\Models\Booking::updateStatus($extRef, 'CANCELLED');
+                try {
+                    (new \TurneroYa\Services\WaitlistService($booking['business_id']))->notifyOnSlotFreed($extRef);
+                } catch (\Throwable $e) {
+                    error_log('[handlePaymentEvent] waitlist: ' . $e->getMessage());
+                }
+            }
+            return;
+        }
+        // Si no matchea con un booking, podría ser un payment derivado de
+        // subscription_authorized_payment llegado como 'payment'. Lo ignoramos.
     }
 
     public function cancelSubscription(string $subscriptionId, bool $immediate = false): void

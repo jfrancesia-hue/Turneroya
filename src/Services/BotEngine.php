@@ -164,6 +164,7 @@ Reglas importantes:
 - NUNCA menciones que sos una IA ni que usás tools. Actuá como un asistente real del negocio.
 - Para reagendar, NO crees un booking nuevo + cancel — usá reschedule_booking que mantiene el mismo booking_id (mejor trazabilidad y no perdés el lugar si falla la creación nueva).
 - Si el cliente quiere un horario y NO hay disponibilidad en las fechas que pide, ofrecele entrar a la lista de espera con add_to_waitlist. Le avisamos automáticamente por WhatsApp si se libera algo.
+- Si create_booking devuelve requires_payment=true, transmití al cliente el message_for_client TAL CUAL (incluye el link y el monto). NO inventes texto. El horario está reservado por 15 minutos hasta que pague.
 
 {$welcome}
 PROMPT;
@@ -353,6 +354,24 @@ PROMPT;
             'source' => 'WHATSAPP_BOT',
             'auto_confirm' => true,
         ]);
+
+        if (!empty($result['requires_payment'])) {
+            return [
+                'success' => true,
+                'requires_payment' => true,
+                'booking_id' => $result['id'],
+                'booking_number' => $result['number'],
+                'payment_url' => $result['payment_url'],
+                'expires_at' => $result['expires_at'],
+                'deposit_amount' => $result['deposit_amount'],
+                'message_for_client' => sprintf(
+                    'Te reservé el horario por 15 minutos. Para confirmarlo necesito una seña de $%s. Pagá acá: %s',
+                    number_format((float) $result['deposit_amount'], 0, ',', '.'),
+                    $result['payment_url']
+                ),
+            ];
+        }
+
         return [
             'success' => true,
             'booking_id' => $result['id'],
