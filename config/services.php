@@ -7,12 +7,16 @@ return [
     ],
     'twilio' => [
         'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        // Alias para compatibilidad: se prefiere account_sid, pero algunos verifiers leen "sid".
+        'sid' => env('TWILIO_ACCOUNT_SID'),
         'auth_token' => env('TWILIO_AUTH_TOKEN'),
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM'),
+        'validate_signature' => filter_var(env('TWILIO_VALIDATE_SIGNATURE', 'true'), FILTER_VALIDATE_BOOLEAN),
     ],
     'mercadopago' => [
         'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
         'public_key' => env('MERCADOPAGO_PUBLIC_KEY'),
+        'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET'),
     ],
     'mail' => [
         'driver' => env('MAIL_DRIVER', 'smtp'),

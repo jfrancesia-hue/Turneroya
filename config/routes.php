@@ -24,16 +24,22 @@ return function (Router $r): void {
 
     // Página pública de reserva
     $r->get('/book/{slug}', 'PublicBookingController@show');
-    $r->post('/book/{slug}/slots', 'PublicBookingController@slots');
-    $r->post('/book/{slug}/confirm', 'PublicBookingController@confirm');
+    $r->group(['middleware' => ['PublicBookingRateLimit']], function (Router $r) {
+        $r->post('/book/{slug}/slots', 'PublicBookingController@slots');
+        $r->post('/book/{slug}/confirm', 'PublicBookingController@confirm');
+    });
     $r->get('/book/{slug}/success/{bookingId}', 'PublicBookingController@success');
 
-    // Webhooks públicos (sin auth)
-    $r->post('/api/webhook/whatsapp', 'WebhookController@whatsapp');
-    $r->post('/api/webhook/mercadopago', 'WebhookController@mercadopago');
+    // Webhooks públicos (sin auth) — rate-limited a 60 req/min por IP
+    $r->group(['middleware' => ['WebhookRateLimit']], function (Router $r) {
+        $r->post('/api/webhook/whatsapp', 'WebhookController@whatsapp');
+        $r->post('/api/webhook/mercadopago', 'WebhookController@mercadopago');
+    });
 
-    // Cron (requiere secret)
-    $r->get('/api/reminders/cron', 'CronController@reminders');
+    // Cron (requiere secret) — rate-limited a 10 req/min por IP
+    $r->group(['middleware' => ['CronRateLimit']], function (Router $r) {
+        $r->get('/api/reminders/cron', 'CronController@reminders');
+    });
 
     // Dashboard (requiere auth)
     $r->group(['prefix' => '/dashboard', 'middleware' => ['Auth']], function (Router $r) {

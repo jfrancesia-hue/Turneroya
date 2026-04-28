@@ -6,22 +6,50 @@ namespace TurneroYa\Controllers;
 use TurneroYa\Core\Request;
 use TurneroYa\Models\Business;
 use TurneroYa\Services\BotEngine;
+use TurneroYa\Services\TwilioSignatureVerifier;
+use TurneroYa\Services\MercadoPagoSignatureVerifier;
+use TurneroYa\Services\WebhookIdempotency;
 
 final class WebhookController
 {
     /**
      * Webhook de Twilio para mensajes entrantes de WhatsApp.
-     * Twilio envía: From (whatsapp:+549...), To (whatsapp:+549...), Body
+     * Twilio envía: From (whatsapp:+549...), To (whatsapp:+549...), Body, MessageSid
      */
     public function whatsapp(): void
     {
+        // 1) Validación de firma (configurable)
+        if (config('services.twilio.validate_signature') === true) {
+            $signature = (string) (Request::header('X-Twilio-Signature') ?? '');
+            $authToken = (string) config('services.twilio.auth_token', '');
+            $url = TwilioSignatureVerifier::currentUrl();
+            // Twilio firma con los params POST form-encoded.
+            $params = $_POST;
+            if (!TwilioSignatureVerifier::verify($url, $params, $signature, $authToken)) {
+                error_log('[Webhook WhatsApp] firma inválida desde IP ' . Request::ip());
+                http_response_code(403);
+                echo 'invalid signature';
+                exit;
+            }
+        }
+
         $from = (string) Request::input('From', '');
         $to = (string) Request::input('To', '');
         $body = trim((string) Request::input('Body', ''));
+        $messageSid = (string) Request::input('MessageSid', '');
 
         if (!$from || !$body) {
             $this->twiml('');
             return;
+        }
+
+        // 2) Idempotencia: si ya procesamos este MessageSid, responder vacío
+        if ($messageSid !== '') {
+            $isNew = WebhookIdempotency::claim('twilio', $messageSid, $_POST);
+            if (!$isNew) {
+                $this->twiml('');
+                return;
+            }
         }
 
         // Normalizar "whatsapp:+549..." → "+549..."
@@ -31,6 +59,7 @@ final class WebhookController
         // Resolver negocio por número de destino
         $business = $this->resolveBusinessByNumber((string) $toNumber);
         if (!$business) {
+            if ($messageSid !== '') WebhookIdempotency::markProcessed('twilio', $messageSid);
             $this->twiml('No hay un negocio asociado a este número.');
             return;
         }
@@ -43,32 +72,69 @@ final class WebhookController
             $reply = 'Perdón, estoy teniendo problemas técnicos. Probá en unos minutos.';
         }
 
+        if ($messageSid !== '') WebhookIdempotency::markProcessed('twilio', $messageSid);
         $this->twiml($reply);
     }
 
     public function mercadopago(): void
     {
         $body = file_get_contents('php://input') ?: '';
-        error_log('[MercadoPago webhook] ' . $body);
+        error_log('[MercadoPago webhook] ' . substr($body, 0, 500));
 
-        // MP envía el topic por querystring o por body (según v1/v2 del webhook)
-        $topic = (string) (Request::input('topic') ?? Request::input('type') ?? '');
-        $resourceId = (string) Request::input('id', '');
-
-        if (!$topic || !$resourceId) {
-            $payload = json_decode($body, true);
-            if (is_array($payload)) {
-                $topic = (string) ($payload['type'] ?? $payload['topic'] ?? $topic);
-                $resourceId = (string) ($payload['data']['id'] ?? $payload['id'] ?? $resourceId);
+        // 1) Verificar firma PRIMERO (si hay secret configurado), antes de parsear nada más
+        $secret = (string) (config('services.mercadopago.webhook_secret') ?? '');
+        if ($secret !== '') {
+            $xSignature = (string) (Request::header('X-Signature') ?? '');
+            $xRequestId = (string) (Request::header('X-Request-Id') ?? '');
+            // dataId puede venir en query o body — pre-parsear sólo eso
+            $dataId = (string) (Request::input('id') ?? '');
+            if ($dataId === '' && $body !== '') {
+                $tmp = json_decode($body, true);
+                if (is_array($tmp)) {
+                    $dataId = (string) ($tmp['data']['id'] ?? $tmp['id'] ?? '');
+                }
+            }
+            if (!MercadoPagoSignatureVerifier::verify($xSignature, $xRequestId, $dataId, $secret)) {
+                error_log('[MP webhook] firma inválida desde IP ' . Request::ip());
+                http_response_code(403);
+                echo 'invalid signature';
+                exit;
             }
         }
 
-        if ($topic && $resourceId) {
-            try {
-                (new \TurneroYa\Services\SubscriptionService())->handleWebhook($topic, $resourceId);
-            } catch (\Throwable $e) {
-                error_log('[MP webhook subscription handler] ' . $e->getMessage());
-            }
+        // 2) Parsear topic + resourceId (query o body)
+        $topic = (string) (Request::input('topic') ?? Request::input('type') ?? '');
+        $resourceId = (string) Request::input('id', '');
+        $payloadArr = json_decode($body, true);
+        if (!is_array($payloadArr)) $payloadArr = null;
+        if ((!$topic || !$resourceId) && $payloadArr) {
+            $topic = $topic ?: (string) ($payloadArr['type'] ?? $payloadArr['topic'] ?? '');
+            $resourceId = $resourceId ?: (string) ($payloadArr['data']['id'] ?? $payloadArr['id'] ?? '');
+        }
+
+        // 3) Validar payload — si falta topic o resourceId, devolver 400
+        if (!$topic || !$resourceId) {
+            error_log('[MP webhook] payload incompleto: ' . substr($body, 0, 500));
+            json_response(['error' => 'incomplete_payload'], 400);
+            return;
+        }
+
+        // 4) Idempotencia con (topic + ':' + resourceId)
+        $externalId = $topic . ':' . $resourceId;
+        $isNew = WebhookIdempotency::claim('mercadopago', $externalId, $payloadArr);
+        if (!$isNew) {
+            json_response(['received' => true, 'duplicate' => true]);
+            return;
+        }
+
+        // 5) Handler — si falla, NO marcar processed, devolver 500 para que MP reintente
+        try {
+            (new \TurneroYa\Services\SubscriptionService())->handleWebhook($topic, $resourceId);
+            WebhookIdempotency::markProcessed('mercadopago', $externalId);
+        } catch (\Throwable $e) {
+            error_log('[MP webhook handler] ' . $e->getMessage());
+            json_response(['error' => 'handler_failed'], 500);
+            return;
         }
 
         json_response(['received' => true]);

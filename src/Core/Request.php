@@ -53,7 +53,12 @@ final class Request
 
     public static function ip(): string
     {
-        return $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $xff = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+        if ($xff !== '') {
+            $first = trim(explode(',', $xff)[0]);
+            if ($first !== '') return $first;
+        }
+        return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     }
 
     public static function header(string $name): ?string
