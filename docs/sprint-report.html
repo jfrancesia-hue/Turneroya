@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TurneroYa · Reporte ejecutivo</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #f6f3eb;
+    --bg-2:      #ece7d8;
+    --paper:     #ffffff;
+    --ink:       #0c1220;
+    --ink-soft:  #3a4256;
+    --muted:     #7c8497;
+    --muted-2:   #9ea6b8;
+    --line:      #e3dcc9;
+    --line-2:    #d4c9ad;
+    --line-soft: #efe9d8;
+
+    --blue:       #2563eb;
+    --blue-deep:  #1d4ed8;
+    --emerald:    #059669;
+    --terracotta: #c0552e;
+    --amber:      #b45309;
+    --plum:       #7c3aed;
+    --slate:      #1a2236;
+
+    --shadow-1: 0 1px 2px rgba(12,18,32,.06);
+    --shadow-2: 0 1px 2px rgba(12,18,32,.06), 0 4px 12px rgba(12,18,32,.04);
+    --shadow-3: 0 1px 2px rgba(12,18,32,.06), 0 8px 24px rgba(12,18,32,.08);
+    --shadow-4: 0 1px 2px rgba(12,18,32,.06), 0 20px 40px rgba(12,18,32,.10);
+    --shadow-key: 0 1px 0 rgba(255,255,255,.7) inset, 0 -1px 0 rgba(12,18,32,.04) inset, 0 12px 30px rgba(12,18,32,.08);
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .display { font-family: 'Manrope', system-ui; letter-spacing: -0.025em; }
+  .mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  /* === noise + mesh background === */
+  .noise::after {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.6' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply; opacity: .35;
+  }
+  .mesh { position: relative; overflow: hidden; }
+  .mesh::before {
+    content:''; position:absolute; inset:0; pointer-events:none; z-index: 0;
+    background:
+      radial-gradient(900px 520px at 8% 0%,   rgba(192,85,46,.10), transparent 60%),
+      radial-gradient(800px 480px at 95% 8%,  rgba(37,99,235,.08), transparent 55%),
+      radial-gradient(700px 520px at 50% 110%, rgba(124,58,237,.06), transparent 60%);
+  }
+  .mesh > * { position: relative; z-index: 1; }
+
+  /* === Cards === */
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: var(--shadow-2);
+  }
+  .card-key {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: var(--shadow-key);
+  }
+  .card-dark {
+    background: linear-gradient(180deg, #1d2436 0%, #0f1424 100%);
+    color: #e7e9ef;
+    border: 1px solid #1f273a;
+    border-radius: 20px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 20px 40px rgba(12,18,32,.18);
+  }
+
+  /* === Pills, dots, chips === */
+  .dot { width: 6px; height: 6px; border-radius: 999px; display: inline-block; }
+  .pill {
+    display: inline-flex; align-items: center; gap: .375rem;
+    padding: .25rem .625rem;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid;
+    line-height: 1;
+  }
+  .chip {
+    display:inline-flex;align-items:center;gap:.5rem;
+    padding: .375rem .75rem;
+    border-radius: 999px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: var(--shadow-2);
+    color: var(--ink-soft);
+  }
+
+  /* === Icon containers (SVG-based) === */
+  .icon-wrap {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, #ffffff 0%, #faf6ec 100%);
+    box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, var(--shadow-1);
+    color: var(--ink-soft);
+  }
+  .icon-wrap-lg {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 8px 18px rgba(12,18,32,.12);
+  }
+
+  /* === 3D objects (pure CSS) === */
+  .scene { perspective: 1200px; }
+  .obj {
+    transform-style: preserve-3d;
+    transition: transform .6s cubic-bezier(.2,.8,.2,1);
+    will-change: transform;
+  }
+
+  /* card object floating */
+  .obj-card {
+    width: 220px; height: 280px;
+    border-radius: 22px;
+    background: linear-gradient(160deg, #ffffff 0%, #f5efe2 100%);
+    border: 1px solid var(--line-2);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.9) inset,
+      0 -1px 0 rgba(12,18,32,.04) inset,
+      0 30px 60px rgba(12,18,32,.18),
+      0 60px 120px rgba(12,18,32,.10);
+  }
+
+  /* sphere */
+  .obj-sphere {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 25%, #ffffff 0%, #fcd9c3 18%, #c0552e 60%, #6b2913 100%);
+    box-shadow:
+      0 30px 50px rgba(192,85,46,.25),
+      0 8px 16px rgba(12,18,32,.18),
+      inset -8px -16px 28px rgba(12,18,32,.12),
+      inset 8px 8px 24px rgba(255,255,255,.4);
+  }
+  .obj-sphere-blue {
+    background: radial-gradient(circle at 30% 25%, #ffffff 0%, #c8d8fb 18%, #2563eb 62%, #102a73 100%);
+    box-shadow:
+      0 30px 50px rgba(37,99,235,.25),
+      0 8px 16px rgba(12,18,32,.18),
+      inset -8px -16px 28px rgba(12,18,32,.10),
+      inset 8px 8px 24px rgba(255,255,255,.4);
+  }
+  .obj-sphere-green {
+    background: radial-gradient(circle at 30% 25%, #ffffff 0%, #b9ecd2 18%, #059669 62%, #053b27 100%);
+    box-shadow:
+      0 30px 50px rgba(5,150,105,.25),
+      0 8px 16px rgba(12,18,32,.18),
+      inset -8px -16px 28px rgba(12,18,32,.10),
+      inset 8px 8px 24px rgba(255,255,255,.4);
+  }
+  .obj-sphere-purple {
+    background: radial-gradient(circle at 30% 25%, #ffffff 0%, #d8c8fb 18%, #7c3aed 62%, #2e1065 100%);
+    box-shadow:
+      0 30px 50px rgba(124,58,237,.25),
+      0 8px 16px rgba(12,18,32,.18),
+      inset -8px -16px 28px rgba(12,18,32,.10),
+      inset 8px 8px 24px rgba(255,255,255,.4);
+  }
+
+  /* cube isometric */
+  .obj-cube {
+    width: 120px; height: 120px;
+    transform-style: preserve-3d;
+    transform: rotateX(-25deg) rotateY(-35deg);
+  }
+  .obj-cube .face {
+    position: absolute; width:120px; height:120px; border-radius: 14px;
+    border: 1px solid rgba(0,0,0,.05);
+  }
+  .obj-cube .top    { background: linear-gradient(160deg,#ffffff 0%,#f0e9d5 100%); transform: rotateX(90deg) translateZ(60px); }
+  .obj-cube .right  { background: linear-gradient(160deg,#e9e0c8 0%,#cdc0a0 100%); transform: rotateY(90deg)  translateZ(60px); }
+  .obj-cube .front  { background: linear-gradient(160deg,#fbf6e9 0%,#e7decb 100%); transform: translateZ(60px); }
+
+  /* float animations (subtle) */
+  @keyframes float-y { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @keyframes float-tilt { 0%,100% { transform: rotate(-6deg) translateY(0); } 50% { transform: rotate(-4deg) translateY(-8px); } }
+  @keyframes float-tilt-r { 0%,100% { transform: rotate(8deg) translateY(0); } 50% { transform: rotate(10deg) translateY(-12px); } }
+  .anim-float        { animation: float-y 6s ease-in-out infinite; }
+  .anim-float-tilt   { animation: float-tilt 7s ease-in-out infinite; }
+  .anim-float-tilt-r { animation: float-tilt-r 8s ease-in-out infinite; }
+
+  /* sectioning helpers */
+  .hairline { border-top: 1px solid var(--line); }
+
+  /* big number with mild depth (no neon) */
+  .num {
+    color: var(--ink);
+    font-feature-settings: "tnum" 1, "ss01" 1;
+  }
+
+  /* mini ticks for migration table */
+  .tick-ok {
+    width: 18px; height: 18px; border-radius: 999px;
+    background: linear-gradient(180deg,#10b981,#059669);
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 8px rgba(5,150,105,.25), 0 1px 0 rgba(255,255,255,.4) inset;
+    color: white;
+  }
+  .tick-pending {
+    width: 18px; height: 18px; border-radius: 999px;
+    background: linear-gradient(180deg,#fbbf24,#b45309);
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 8px rgba(180,83,9,.20), 0 1px 0 rgba(255,255,255,.4) inset;
+    color: white;
+  }
+
+  /* button */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .8rem 1.25rem;
+    border-radius: 14px;
+    font-weight: 700; font-size: 14px;
+    color: white;
+    background: linear-gradient(180deg, #2c3a5a 0%, #0c1220 100%);
+    box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 -1px 0 rgba(0,0,0,.2) inset, 0 8px 16px rgba(12,18,32,.18);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 -1px 0 rgba(0,0,0,.2) inset, 0 12px 24px rgba(12,18,32,.22); }
+
+  /* tool card */
+  .tool {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: var(--shadow-2);
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  .tool:hover { transform: translateY(-2px); box-shadow: var(--shadow-3); }
+
+  /* roadmap card */
+  .road {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 26px;
+    box-shadow: var(--shadow-2);
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  .road:hover { transform: translateY(-2px); box-shadow: var(--shadow-3); }
+
+  /* tinted icon backgrounds */
+  .ic-blue   { background: linear-gradient(180deg,#dbeafe,#bfdbfe); color:#1d4ed8; }
+  .ic-green  { background: linear-gradient(180deg,#d1fae5,#a7f3d0); color:#065f46; }
+  .ic-orange { background: linear-gradient(180deg,#fed7aa,#fdba74); color:#9a3412; }
+  .ic-purple { background: linear-gradient(180deg,#ede9fe,#ddd6fe); color:#5b21b6; }
+  .ic-amber  { background: linear-gradient(180deg,#fef3c7,#fde68a); color:#854d0e; }
+  .ic-pink   { background: linear-gradient(180deg,#fce7f3,#fbcfe8); color:#9d174d; }
+  .ic-slate  { background: linear-gradient(180deg,#e2e8f0,#cbd5e1); color:#1e293b; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ========= NAV ========= -->
+<header class="border-b" style="border-color:var(--line)">
+  <div class="max-w-[1200px] mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl flex items-center justify-center"
+           style="background:linear-gradient(180deg,#2c3a5a 0%,#0c1220 100%); box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 8px 16px rgba(12,18,32,.18);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="3"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8"  y1="2" x2="8"  y2="6"/>
+          <line x1="3"  y1="10" x2="21" y2="10"/>
+          <circle cx="8" cy="15" r="1.5" fill="white"/>
+        </svg>
+      </div>
+      <div>
+        <div class="font-extrabold tracking-tight display text-lg">TurneroYa</div>
+        <div class="mono text-[11px]" style="color:var(--muted)">reporte ejecutivo · 28 abr 2026</div>
+      </div>
+    </div>
+    <div class="hidden md:flex items-center gap-3">
+      <span class="chip">
+        <span class="dot" style="background:var(--emerald)"></span> Sprint 1+2 cerrado
+      </span>
+      <span class="chip mono" style="color:var(--ink-soft)">7df8106</span>
+    </div>
+  </div>
+</header>
+
+<!-- ========= HERO ========= -->
+<section class="mesh">
+  <div class="max-w-[1200px] mx-auto px-6 pt-20 pb-14">
+    <div class="grid md:grid-cols-12 gap-10 items-center">
+
+      <!-- Hero text -->
+      <div class="md:col-span-7">
+        <div class="flex flex-wrap gap-2 mb-6">
+          <span class="pill" style="background:#ecfdf5; border-color:#a7f3d0; color:#065f46">
+            <span class="dot" style="background:var(--emerald)"></span> Listo para producción
+          </span>
+          <span class="pill" style="background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            89 tests · 0 issues
+          </span>
+        </div>
+
+        <h1 class="display text-5xl md:text-6xl font-extrabold leading-[1.05] mb-5">
+          Tu sistema de turnos<br/>
+          ahora es <span style="background:linear-gradient(135deg,#c0552e 0%,#7c3aed 100%);-webkit-background-clip:text;background-clip:text;color:transparent;">infraestructura seria.</span>
+        </h1>
+        <p class="text-lg max-w-xl" style="color:var(--ink-soft)">
+          Webhooks blindados, bot de WhatsApp completo, pagos con seña automática y lista de espera autónoma. Cada cambio fue testeado y revisado antes del push a producción.
+        </p>
+
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="#siguiente-paso" class="btn-primary">
+            Ver siguiente paso
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <a href="#sprints" class="chip" style="padding:.8rem 1.25rem; font-size:14px;">
+            Ver lo que hicimos
+          </a>
+        </div>
+      </div>
+
+      <!-- 3D scene -->
+      <div class="md:col-span-5 scene relative h-[420px] hidden md:block">
+        <!-- floating card -->
+        <div class="obj absolute anim-float-tilt" style="top:30px; left:40px;">
+          <div class="obj-card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-md flex items-center justify-center" style="background:linear-gradient(180deg,#2563eb,#1d4ed8); box-shadow: 0 4px 8px rgba(37,99,235,.3);">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                </div>
+                <div class="text-[11px] font-bold mono uppercase tracking-wider" style="color:var(--muted)">Mar 28</div>
+              </div>
+              <span class="dot" style="background:var(--emerald); box-shadow: 0 0 0 3px rgba(5,150,105,.15);"></span>
+            </div>
+            <div class="space-y-2.5">
+              <div class="rounded-xl p-2.5" style="background:linear-gradient(180deg,#fff8f1,#fde8d4); border:1px solid rgba(192,85,46,.15);">
+                <div class="text-[10px] mono font-bold" style="color:#9a3412">15:30 — 16:00</div>
+                <div class="text-xs font-bold mt-0.5" style="color:var(--ink)">Corte + Barba</div>
+              </div>
+              <div class="rounded-xl p-2.5" style="background:linear-gradient(180deg,#eff6ff,#dbeafe); border:1px solid rgba(37,99,235,.15);">
+                <div class="text-[10px] mono font-bold" style="color:#1d4ed8">17:00 — 17:30</div>
+                <div class="text-xs font-bold mt-0.5" style="color:var(--ink)">María L.</div>
+              </div>
+              <div class="rounded-xl p-2.5" style="background:linear-gradient(180deg,#f5f3ff,#ede9fe); border:1px solid rgba(124,58,237,.15);">
+                <div class="text-[10px] mono font-bold" style="color:#5b21b6">18:30 — 19:00</div>
+                <div class="text-xs font-bold mt-0.5" style="color:var(--ink)">Nuevo turno</div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t flex items-center justify-between" style="border-color:var(--line)">
+              <div class="text-[10px] mono" style="color:var(--muted)">3 turnos hoy</div>
+              <div class="text-[10px] mono font-bold" style="color:var(--emerald)">100% conf.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- floating sphere terracotta -->
+        <div class="obj absolute anim-float" style="top:0; right:60px;">
+          <div class="obj-sphere"></div>
+        </div>
+
+        <!-- floating sphere blue with check -->
+        <div class="obj absolute anim-float-tilt-r" style="bottom:30px; right:0;">
+          <div class="obj-sphere-blue relative" style="width:90px;height:90px;">
+            <svg class="absolute inset-0 m-auto" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,.25));">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- floating mini chart -->
+        <div class="obj absolute anim-float" style="bottom:80px; left:0;">
+          <div class="rounded-2xl p-4 w-[170px]" style="background:linear-gradient(180deg,#1d2436 0%,#0f1424 100%); color:white; box-shadow: 0 30px 60px rgba(12,18,32,.30), 0 1px 0 rgba(255,255,255,.06) inset;">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-[10px] mono uppercase tracking-wider" style="color:#7c8497">Tests</div>
+              <div class="pill" style="background:rgba(5,150,105,.15);border-color:rgba(5,150,105,.4);color:#10b981">+88</div>
+            </div>
+            <div class="display text-3xl font-extrabold">89</div>
+            <svg viewBox="0 0 140 36" class="w-full h-7 mt-2">
+              <defs>
+                <linearGradient id="mini-line" x1="0" x2="1">
+                  <stop offset="0%" stop-color="#c0552e"/>
+                  <stop offset="100%" stop-color="#7c3aed"/>
+                </linearGradient>
+              </defs>
+              <path d="M 4,32 L 30,18 L 56,17 L 82,12 L 108,8 L 136,4" fill="none" stroke="url(#mini-line)" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="136" cy="4" r="3" fill="#7c3aed" stroke="white" stroke-width="1.5"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- KPI bar -->
+    <div class="mt-16 grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div class="card-key p-5">
+        <div class="icon-wrap ic-blue mb-4">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="display text-4xl font-extrabold num">89</div>
+        <div class="text-xs font-semibold mt-1" style="color:var(--muted)">tests pasando</div>
+        <div class="text-[11px] mono mt-1.5" style="color:var(--emerald)">+88 sumados</div>
+      </div>
+      <div class="card-key p-5">
+        <div class="icon-wrap ic-orange mb-4">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+        </div>
+        <div class="display text-4xl font-extrabold num">5</div>
+        <div class="text-xs font-semibold mt-1" style="color:var(--muted)">commits nuevos</div>
+        <div class="text-[11px] mono mt-1.5" style="color:var(--blue)">en main</div>
+      </div>
+      <div class="card-key p-5">
+        <div class="icon-wrap ic-purple mb-4">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </div>
+        <div class="display text-4xl font-extrabold num">10</div>
+        <div class="text-xs font-semibold mt-1" style="color:var(--muted)">features nuevas</div>
+        <div class="text-[11px] mono mt-1.5" style="color:var(--plum)">2 sprints</div>
+      </div>
+      <div class="card-key p-5">
+        <div class="icon-wrap ic-green mb-4">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="display text-4xl font-extrabold num">11</div>
+        <div class="text-xs font-semibold mt-1" style="color:var(--muted)">issues cerrados</div>
+        <div class="text-[11px] mono mt-1.5" style="color:var(--emerald)">2 reviews</div>
+      </div>
+      <div class="card-key p-5">
+        <div class="icon-wrap ic-amber mb-4">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        </div>
+        <div class="display text-4xl font-extrabold num">3</div>
+        <div class="text-xs font-semibold mt-1" style="color:var(--muted)">migraciones</div>
+        <div class="text-[11px] mono mt-1.5" style="color:var(--amber)">listas para Render</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========= IMPACTO PARA EL NEGOCIO ========= -->
+<section>
+  <div class="max-w-[1200px] mx-auto px-6 py-20">
+    <div class="text-center max-w-2xl mx-auto mb-14">
+      <span class="chip mb-4">Para tu negocio</span>
+      <h2 class="display text-4xl md:text-5xl font-extrabold mt-4 mb-3 tracking-tight">Lo que significa, en simple</h2>
+      <p class="text-base" style="color:var(--ink-soft)">Tres cambios concretos que tus clientes y tu equipo van a notar desde el día uno.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5">
+
+      <!-- Card 1 -->
+      <div class="card p-7">
+        <div class="flex items-center gap-4 mb-5">
+          <div class="icon-wrap-lg" style="background:linear-gradient(180deg,#dbeafe 0%,#bfdbfe 100%); color:#1d4ed8;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+        </div>
+        <h3 class="display text-xl font-extrabold mb-2">Más seguro</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--ink-soft)">
+          Cada vez que llega un mensaje de WhatsApp o un pago de MercadoPago, el sistema <strong>verifica la firma criptográfica</strong> antes de procesarlo. Si no es legítimo, se descarta. Nadie puede falsificar turnos o pagos por la URL pública.
+        </p>
+        <div class="mt-5 flex flex-wrap gap-1.5">
+          <span class="pill" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">HMAC-SHA1</span>
+          <span class="pill" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">HMAC-SHA256</span>
+          <span class="pill" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">Replay window 5min</span>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="card p-7">
+        <div class="flex items-center gap-4 mb-5">
+          <div class="icon-wrap-lg" style="background:linear-gradient(180deg,#d1fae5 0%,#a7f3d0 100%); color:#065f46;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          </div>
+        </div>
+        <h3 class="display text-xl font-extrabold mb-2">Cobra señas sin esfuerzo</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--ink-soft)">
+          Cuando el servicio requiere seña, el cliente <strong>tiene 15 minutos</strong> para pagar por MercadoPago. Si no paga, el horario se libera automáticamente y avisa al siguiente en la lista. Adiós no-shows.
+        </p>
+        <div class="mt-5 flex flex-wrap gap-1.5">
+          <span class="pill" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46">Sin no-shows</span>
+          <span class="pill" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46">Auto-cancel</span>
+          <span class="pill" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46">Cobro inmediato</span>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="card p-7">
+        <div class="flex items-center gap-4 mb-5">
+          <div class="icon-wrap-lg" style="background:linear-gradient(180deg,#ede9fe 0%,#ddd6fe 100%); color:#5b21b6;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+        </div>
+        <h3 class="display text-xl font-extrabold mb-2">Lista de espera autónoma</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--ink-soft)">
+          Si el cliente no encuentra horario, lo anotamos en la cola. Cuando alguien cancela, <strong>el primero recibe WhatsApp automático</strong> con el slot liberado. Recuperás turnos que se hubieran perdido.
+        </p>
+        <div class="mt-5 flex flex-wrap gap-1.5">
+          <span class="pill" style="background:#f5f3ff;border-color:#ddd6fe;color:#5b21b6">FIFO</span>
+          <span class="pill" style="background:#f5f3ff;border-color:#ddd6fe;color:#5b21b6">Aviso automático</span>
+          <span class="pill" style="background:#f5f3ff;border-color:#ddd6fe;color:#5b21b6">Anti-race</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========= SPRINTS ========= -->
+<section id="sprints" style="background:linear-gradient(180deg,transparent 0%,var(--bg-2) 50%,transparent 100%);">
+  <div class="max-w-[1200px] mx-auto px-6 py-20">
+
+    <div class="flex items-end justify-between mb-12">
+      <div>
+        <span class="chip mb-4">El recorrido</span>
+        <h2 class="display text-4xl md:text-5xl font-extrabold mt-4 tracking-tight">Lo que se hizo, paso a paso</h2>
+      </div>
+      <span class="hidden md:flex items-center gap-2 mono text-xs" style="color:var(--muted)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        b0b093b → 7df8106
+      </span>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+
+      <!-- Sprint 1 -->
+      <div class="card p-8 relative overflow-hidden">
+        <!-- decoration sphere -->
+        <div class="absolute -right-12 -top-12 w-40 h-40 rounded-full opacity-50"
+             style="background: radial-gradient(circle at 30% 30%, #fde8d4 0%, #c0552e 70%, #6b2913 100%); filter: blur(2px);"></div>
+
+        <div class="relative">
+          <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-extrabold display"
+                   style="background:linear-gradient(180deg,#c0552e,#6b2913); box-shadow: 0 8px 16px rgba(192,85,46,.3), 0 1px 0 rgba(255,255,255,.2) inset;">01</div>
+              <div>
+                <div class="text-[11px] font-bold mono uppercase tracking-widest" style="color:var(--terracotta)">Sprint 1</div>
+                <h3 class="display text-2xl font-extrabold">Que no se rompa</h3>
+              </div>
+            </div>
+            <div class="icon-wrap-lg" style="background:linear-gradient(180deg,#fed7aa,#fdba74); color:#9a3412;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+          </div>
+
+          <p class="text-sm mb-6" style="color:var(--ink-soft)">
+            Antes de exponer en producción, <strong>blindamos los puntos de entrada</strong>: webhooks externos, endpoints públicos y rate limits.
+          </p>
+
+          <ul class="space-y-3.5">
+            <li class="flex gap-3 items-start">
+              <span class="tick-ok mt-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div>
+                <div class="font-bold text-sm">Verificación de firma criptográfica</div>
+                <div class="text-xs" style="color:var(--muted)">Twilio HMAC-SHA1 + MercadoPago HMAC-SHA256 + replay protection</div>
+              </div>
+            </li>
+            <li class="flex gap-3 items-start">
+              <span class="tick-ok mt-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div>
+                <div class="font-bold text-sm">Idempotencia (sin duplicados)</div>
+                <div class="text-xs" style="color:var(--muted)">Reenvíos de Twilio o MP no crean turnos ni pagos repetidos</div>
+              </div>
+            </li>
+            <li class="flex gap-3 items-start">
+              <span class="tick-ok mt-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div>
+                <div class="font-bold text-sm">Rate limit anti-ataques</div>
+                <div class="text-xs" style="color:var(--muted)">Nadie puede saturar el endpoint público o quemar la API key</div>
+              </div>
+            </li>
+            <li class="flex gap-3 items-start">
+              <span class="tick-ok mt-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div>
+                <div class="font-bold text-sm">Limpieza automática de datos viejos</div>
+                <div class="text-xs" style="color:var(--muted)">La base no crece infinita: webhook_events, rate_limits, sesiones</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Sprint 2 -->
+      <div class="card p-8 relative overflow-hidden">
+        <div class="absolute -right-12 -top-12 w-40 h-40 rounded-full opacity-50"
+             style="background: radial-gradient(circle at 30% 30%, #c8d8fb 0%, #2563eb 60%, #1e3a8a 100%); filter: blur(2px);"></div>
+
+        <div class="relative">
+          <div class="flex items-start justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-extrabold display"
+                   style="background:linear-gradient(180deg,#2563eb,#1e3a8a); box-shadow: 0 8px 16px rgba(37,99,235,.3), 0 1px 0 rgba(255,255,255,.2) inset;">02</div>
+              <div>
+                <div class="text-[11px] font-bold mono uppercase tracking-widest" style="color:var(--blue)">Sprint 2</div>
+                <h3 class="display text-2xl font-extrabold">Que la conversión suba</h3>
+              </div>
+            </div>
+            <div class="icon-wrap-lg" style="background:linear-gradient(180deg,#dbeafe,#bfdbfe); color:#1d4ed8;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+          </div>
+
+          <p class="text-sm mb-6" style="color:var(--ink-soft)">
+            Las features que cambian la experiencia: <strong>cuándo, cómo y dónde</strong> el cliente puede operar con su turno.
+          </p>
+
+          <ul class="space-y-3.5">
+            <li class="flex gap-3 items-start">
+              <span class="tick-ok mt-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div>
+                <div class="font-bold text-sm">Reagendar desde WhatsApp</div>
+                <div class="text-xs" style="color:var(--muted)">Sin llamar, sin escribirle al peluquero. El bot lo hace solo</div>
+              </div>
+            </li>
+            <li class="flex gap-3 items-start">
+              <span class="tick-ok mt-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div>
+                <div class="font-bold text-sm">Botones interactivos en WhatsApp</div>
+                <div class="text-xs" style="color:var(--muted)">Confirmar / Cancelar / Reagendar con un toque, sin escribir</div>
+              </div>
+            </li>
+            <li class="flex gap-3 items-start">
+              <span class="tick-ok mt-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div>
+                <div class="font-bold text-sm">Lista de espera automática</div>
+                <div class="text-xs" style="color:var(--muted)">Recuperás turnos que se hubieran perdido por cancelaciones</div>
+              </div>
+            </li>
+            <li class="flex gap-3 items-start">
+              <span class="tick-ok mt-1"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <div>
+                <div class="font-bold text-sm">Seña obligatoria con expiración</div>
+                <div class="text-xs" style="color:var(--muted)">Si no paga en 15 min, libero el slot y no perdés el cliente</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========= STATS ========= -->
+<section>
+  <div class="max-w-[1200px] mx-auto px-6 py-20">
+
+    <div class="text-center max-w-2xl mx-auto mb-14">
+      <span class="chip mb-4">La calidad, en datos</span>
+      <h2 class="display text-4xl md:text-5xl font-extrabold mt-4 mb-3 tracking-tight">Cada cambio fue testeado</h2>
+      <p class="text-base" style="color:var(--ink-soft)">Crecimiento de la cobertura de tests y resolución de hallazgos del code review.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+
+      <!-- Tests growth -->
+      <div class="card-dark p-7 md:col-span-7">
+        <div class="flex items-start justify-between mb-1">
+          <div>
+            <div class="text-[11px] mono uppercase tracking-widest" style="color:#7c8497">Cobertura</div>
+            <h3 class="display text-xl font-extrabold mt-1" style="color:white">Tests por commit</h3>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <div class="display text-3xl font-extrabold" style="color:white">89</div>
+              <div class="text-[11px] mono" style="color:#10b981">+88 vs baseline</div>
+            </div>
+          </div>
+        </div>
+
+        <svg viewBox="0 0 600 200" class="w-full h-48 mt-4">
+          <defs>
+            <linearGradient id="line-grad" x1="0" x2="1">
+              <stop offset="0%" stop-color="#fb923c"/>
+              <stop offset="50%" stop-color="#ec4899"/>
+              <stop offset="100%" stop-color="#a78bfa"/>
+            </linearGradient>
+            <linearGradient id="fill-grad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#fb923c" stop-opacity=".30"/>
+              <stop offset="100%" stop-color="#fb923c" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- grid -->
+          <line x1="0" x2="600" y1="180" y2="180" stroke="rgba(255,255,255,.08)"/>
+          <line x1="0" x2="600" y1="135" y2="135" stroke="rgba(255,255,255,.04)" stroke-dasharray="3,4"/>
+          <line x1="0" x2="600" y1="90"  y2="90"  stroke="rgba(255,255,255,.04)" stroke-dasharray="3,4"/>
+          <line x1="0" x2="600" y1="45"  y2="45"  stroke="rgba(255,255,255,.04)" stroke-dasharray="3,4"/>
+          <!-- area -->
+          <path d="M 30,178 L 150,100 L 270,97 L 390,75 L 510,55 L 580,42 L 580,180 L 30,180 Z" fill="url(#fill-grad)"/>
+          <!-- line -->
+          <path d="M 30,178 L 150,100 L 270,97 L 390,75 L 510,55 L 580,42" fill="none" stroke="url(#line-grad)" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- points -->
+          <circle cx="30"  cy="178" r="5" fill="#0f1424" stroke="#fb923c" stroke-width="2.5"/>
+          <circle cx="150" cy="100" r="5" fill="#0f1424" stroke="#fb923c" stroke-width="2.5"/>
+          <circle cx="270" cy="97"  r="5" fill="#0f1424" stroke="#ec4899" stroke-width="2.5"/>
+          <circle cx="390" cy="75"  r="5" fill="#0f1424" stroke="#ec4899" stroke-width="2.5"/>
+          <circle cx="510" cy="55"  r="5" fill="#0f1424" stroke="#a78bfa" stroke-width="2.5"/>
+          <circle cx="580" cy="42"  r="6" fill="#a78bfa" stroke="white" stroke-width="2"/>
+        </svg>
+
+        <div class="mt-4 grid grid-cols-6 gap-2 text-[10px]" style="color:#7c8497">
+          <div><div class="font-bold mono" style="color:white">1</div>baseline</div>
+          <div><div class="font-bold mono" style="color:white">55</div>sprint 1</div>
+          <div><div class="font-bold mono" style="color:white">57</div>reschedule</div>
+          <div><div class="font-bold mono" style="color:white">70</div>botones</div>
+          <div><div class="font-bold mono" style="color:white">81</div>waitlist</div>
+          <div><div class="font-bold mono" style="color:white">89</div>seña + fix</div>
+        </div>
+      </div>
+
+      <!-- Issues -->
+      <div class="card p-7 md:col-span-5">
+        <div class="flex items-start justify-between mb-1">
+          <div>
+            <div class="text-[11px] mono uppercase tracking-widest" style="color:var(--muted)">Code review</div>
+            <h3 class="display text-xl font-extrabold mt-1">Hallazgos resueltos</h3>
+          </div>
+          <div class="text-right">
+            <div class="display text-3xl font-extrabold num">11/12</div>
+            <div class="text-[11px] mono" style="color:var(--muted)">crítico+alto+medio</div>
+          </div>
+        </div>
+
+        <div class="space-y-5 mt-6">
+          <div>
+            <div class="flex justify-between items-baseline mb-2">
+              <div class="flex items-center gap-2">
+                <span class="dot" style="background:var(--terracotta)"></span>
+                <span class="font-bold text-sm">Críticos</span>
+              </div>
+              <span class="font-extrabold display text-base num">2/2</span>
+            </div>
+            <div class="rounded-full h-2 overflow-hidden" style="background:rgba(12,18,32,.06)">
+              <div class="h-full" style="width:100%; background:linear-gradient(90deg,#c0552e,#6b2913);"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between items-baseline mb-2">
+              <div class="flex items-center gap-2">
+                <span class="dot" style="background:var(--amber)"></span>
+                <span class="font-bold text-sm">Altos</span>
+              </div>
+              <span class="font-extrabold display text-base num">4/4</span>
+            </div>
+            <div class="rounded-full h-2 overflow-hidden" style="background:rgba(12,18,32,.06)">
+              <div class="h-full" style="width:100%; background:linear-gradient(90deg,#fbbf24,#b45309);"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between items-baseline mb-2">
+              <div class="flex items-center gap-2">
+                <span class="dot" style="background:var(--emerald)"></span>
+                <span class="font-bold text-sm">Medios</span>
+              </div>
+              <span class="font-extrabold display text-base num">5/6</span>
+            </div>
+            <div class="rounded-full h-2 overflow-hidden" style="background:rgba(12,18,32,.06)">
+              <div class="h-full" style="width:83%; background:linear-gradient(90deg,#10b981,#059669);"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between items-baseline mb-2">
+              <div class="flex items-center gap-2">
+                <span class="dot" style="background:var(--plum)"></span>
+                <span class="font-bold text-sm">Nits opcionales</span>
+              </div>
+              <span class="font-extrabold display text-base num">2/4</span>
+            </div>
+            <div class="rounded-full h-2 overflow-hidden" style="background:rgba(12,18,32,.06)">
+              <div class="h-full" style="width:50%; background:linear-gradient(90deg,#a78bfa,#7c3aed);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========= BOT TOOLS ========= -->
+<section>
+  <div class="max-w-[1200px] mx-auto px-6 py-20">
+
+    <div class="flex items-end justify-between mb-12">
+      <div>
+        <span class="chip mb-4">Tu vendedor 24/7</span>
+        <h2 class="display text-4xl md:text-5xl font-extrabold mt-4 tracking-tight">El bot, ahora con 8 herramientas</h2>
+        <p class="text-base mt-3 max-w-xl" style="color:var(--ink-soft)">Claude Haiku 4.5 entiende lenguaje natural y opera tu calendario por su cuenta. Cada herramienta valida que el cliente sea quien dice ser.</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+      <div class="tool">
+        <div class="icon-wrap mb-4 ic-slate"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
+        <div class="display font-extrabold text-sm">Lista servicios</div>
+        <div class="text-xs mt-1" style="color:var(--muted)">catálogo + duración + precio</div>
+      </div>
+      <div class="tool">
+        <div class="icon-wrap mb-4 ic-slate"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="display font-extrabold text-sm">Lista profesionales</div>
+        <div class="text-xs mt-1" style="color:var(--muted)">filtra por servicio</div>
+      </div>
+      <div class="tool">
+        <div class="icon-wrap mb-4 ic-slate"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <div class="display font-extrabold text-sm">Busca horarios</div>
+        <div class="text-xs mt-1" style="color:var(--muted)">8 opciones en tiempo real</div>
+      </div>
+      <div class="tool">
+        <div class="icon-wrap mb-4 ic-slate"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg></div>
+        <div class="display font-extrabold text-sm">Reserva turno</div>
+        <div class="text-xs mt-1" style="color:var(--muted)">detecta seña obligatoria</div>
+      </div>
+
+      <div class="tool">
+        <div class="icon-wrap mb-4 ic-slate"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="13" y2="11"/></svg></div>
+        <div class="display font-extrabold text-sm">Mis turnos</div>
+        <div class="text-xs mt-1" style="color:var(--muted)">próximos confirmados</div>
+      </div>
+
+      <!-- Highlight: nuevo -->
+      <div class="tool relative" style="background:linear-gradient(180deg,#ffffff 0%,#fef2ec 100%); border-color:rgba(192,85,46,.25);">
+        <span class="absolute top-3 right-3 pill" style="background:white;color:#9a3412;border-color:#fed7aa">nuevo</span>
+        <div class="icon-wrap mb-4 ic-orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+        <div class="display font-extrabold text-sm">Cancelar turno</div>
+        <div class="text-xs mt-1" style="color:var(--muted)">valida ownership</div>
+      </div>
+      <div class="tool relative" style="background:linear-gradient(180deg,#ffffff 0%,#eff6ff 100%); border-color:rgba(37,99,235,.25);">
+        <span class="absolute top-3 right-3 pill" style="background:white;color:#1d4ed8;border-color:#bfdbfe">nuevo</span>
+        <div class="icon-wrap mb-4 ic-blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>
+        <div class="display font-extrabold text-sm">Reagendar</div>
+        <div class="text-xs mt-1" style="color:var(--muted)">mantiene booking_id</div>
+      </div>
+      <div class="tool relative" style="background:linear-gradient(180deg,#ffffff 0%,#f5f3ff 100%); border-color:rgba(124,58,237,.25);">
+        <span class="absolute top-3 right-3 pill" style="background:white;color:#5b21b6;border-color:#ddd6fe">nuevo</span>
+        <div class="icon-wrap mb-4 ic-purple"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="display font-extrabold text-sm">Lista de espera</div>
+        <div class="text-xs mt-1" style="color:var(--muted)">aviso automático WA</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========= SIGUIENTE PASO ========= -->
+<section id="siguiente-paso" style="background:linear-gradient(180deg,transparent 0%,var(--bg-2) 50%,transparent 100%);">
+  <div class="max-w-[1200px] mx-auto px-6 py-20">
+
+    <div class="text-center max-w-2xl mx-auto mb-14">
+      <span class="chip mb-4">Te toca a vos</span>
+      <h2 class="display text-4xl md:text-5xl font-extrabold mt-4 mb-3 tracking-tight">3 pasos para activar todo</h2>
+      <p class="text-base" style="color:var(--ink-soft)">Tareas manuales que requieren acceso a tu cuenta. 10 minutos en total.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5">
+
+      <!-- Paso 1 -->
+      <div class="card p-7">
+        <div class="flex items-start justify-between mb-5">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold display"
+               style="background:linear-gradient(180deg,#059669,#065f46); box-shadow: 0 8px 16px rgba(5,150,105,.3), 0 1px 0 rgba(255,255,255,.2) inset;">1</div>
+          <div class="icon-wrap-lg ic-green">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          </div>
+        </div>
+        <h3 class="display text-xl font-extrabold mb-1">En Render</h3>
+        <p class="text-xs mb-5" style="color:var(--muted)">panel de tu deploy</p>
+        <ul class="space-y-3 text-sm">
+          <li class="flex gap-2.5"><span class="dot mt-2" style="background:var(--emerald)"></span><div>Correr <span class="mono text-xs px-1.5 py-0.5 rounded" style="background:#ecfdf5;color:#065f46">composer migrate</span></div></li>
+          <li class="flex gap-2.5"><span class="dot mt-2" style="background:var(--emerald)"></span><div>Setear 4 variables de entorno nuevas</div></li>
+          <li class="flex gap-2.5"><span class="dot mt-2" style="background:var(--emerald)"></span><div>Activar 2 cron jobs (expirar pagos + cleanup)</div></li>
+        </ul>
+      </div>
+
+      <!-- Paso 2 -->
+      <div class="card p-7">
+        <div class="flex items-start justify-between mb-5">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold display"
+               style="background:linear-gradient(180deg,#2563eb,#1e3a8a); box-shadow: 0 8px 16px rgba(37,99,235,.3), 0 1px 0 rgba(255,255,255,.2) inset;">2</div>
+          <div class="icon-wrap-lg ic-blue">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="14" x2="10" y2="14"/></svg>
+          </div>
+        </div>
+        <h3 class="display text-xl font-extrabold mb-1">En MercadoPago</h3>
+        <p class="text-xs mb-5" style="color:var(--muted)">developers dashboard</p>
+        <ul class="space-y-3 text-sm">
+          <li class="flex gap-2.5"><span class="dot mt-2" style="background:var(--blue)"></span><div>Webhook a <span class="mono text-xs px-1.5 py-0.5 rounded" style="background:#eff6ff;color:#1d4ed8">/api/webhook/mercadopago</span></div></li>
+          <li class="flex gap-2.5"><span class="dot mt-2" style="background:var(--blue)"></span><div>Suscribir 3 eventos: payment, preapproval, authorized_payment</div></li>
+          <li class="flex gap-2.5"><span class="dot mt-2" style="background:var(--blue)"></span><div>Generar webhook secret y copiarlo a Render</div></li>
+        </ul>
+      </div>
+
+      <!-- Paso 3 -->
+      <div class="card p-7">
+        <div class="flex items-start justify-between mb-5">
+          <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold display"
+               style="background:linear-gradient(180deg,#7c3aed,#4c1d95); box-shadow: 0 8px 16px rgba(124,58,237,.3), 0 1px 0 rgba(255,255,255,.2) inset;">3</div>
+          <div class="icon-wrap-lg ic-purple">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </div>
+        </div>
+        <h3 class="display text-xl font-extrabold mb-1">En Twilio</h3>
+        <p class="text-xs mb-5" style="color:var(--muted)">opcional · para los botones</p>
+        <ul class="space-y-3 text-sm">
+          <li class="flex gap-2.5"><span class="dot mt-2" style="background:var(--plum)"></span><div>Crear plantilla "Quick Reply" en Content Builder</div></li>
+          <li class="flex gap-2.5"><span class="dot mt-2" style="background:var(--plum)"></span><div>Esperar aprobación de Meta (24-72hs)</div></li>
+          <li class="flex gap-2.5"><span class="dot mt-2" style="background:var(--plum)"></span><div>Pegar HX SID aprobado en Render</div></li>
+        </ul>
+        <p class="text-xs mt-5 pt-4 border-t" style="color:var(--muted); border-color:var(--line)">Sin esto, los recordatorios siguen llegando como texto plano (funciona igual).</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========= ROADMAP ========= -->
+<section>
+  <div class="max-w-[1200px] mx-auto px-6 py-20">
+
+    <div class="flex items-end justify-between mb-12">
+      <div>
+        <span class="chip mb-4">Lo que viene</span>
+        <h2 class="display text-4xl md:text-5xl font-extrabold mt-4 tracking-tight">Sprint 3: que se diferencie</h2>
+        <p class="text-base mt-3 max-w-xl" style="color:var(--ink-soft)">Las 6 features que separan TurneroYa de cualquier competencia genérica del mercado.</p>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+      <div class="road">
+        <div class="flex items-start justify-between mb-5">
+          <div class="icon-wrap-lg ic-blue">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <span class="pill" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">Pedido #1</span>
+        </div>
+        <h4 class="display font-extrabold text-xl mb-2">Sync Google Calendar</h4>
+        <p class="text-sm" style="color:var(--ink-soft)">El profesional ve sus turnos en su Google Calendar como cualquier evento. Bidireccional.</p>
+      </div>
+
+      <div class="road">
+        <div class="flex items-start justify-between mb-5">
+          <div class="icon-wrap-lg ic-pink">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </div>
+          <span class="pill" style="background:#fdf2f8;border-color:#fbcfe8;color:#9d174d">Reuso</span>
+        </div>
+        <h4 class="display font-extrabold text-xl mb-2">Instagram DM</h4>
+        <p class="text-sm" style="color:var(--ink-soft)">El mismo bot en los DMs de Instagram. El 60% del tráfico de gastronómicos viene de IG.</p>
+      </div>
+
+      <div class="road">
+        <div class="flex items-start justify-between mb-5">
+          <div class="icon-wrap-lg ic-purple">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <span class="pill" style="background:#f5f3ff;border-color:#ddd6fe;color:#5b21b6">Viral</span>
+        </div>
+        <h4 class="display font-extrabold text-xl mb-2">Widget para web</h4>
+        <p class="text-sm" style="color:var(--ink-soft)">Un script tag y el booking aparece embebido en cualquier sitio del cliente.</p>
+      </div>
+
+      <div class="road">
+        <div class="flex items-start justify-between mb-5">
+          <div class="icon-wrap-lg ic-amber">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <span class="pill" style="background:#fffbeb;border-color:#fde68a;color:#854d0e">Reputación</span>
+        </div>
+        <h4 class="display font-extrabold text-xl mb-2">Reseñas + NPS</h4>
+        <p class="text-sm" style="color:var(--ink-soft)">24h después del turno, WhatsApp pidiendo rating. Push automático a Google Reviews.</p>
+      </div>
+
+      <div class="road">
+        <div class="flex items-start justify-between mb-5">
+          <div class="icon-wrap-lg ic-green">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/></svg>
+          </div>
+          <span class="pill" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46">Plan vendido</span>
+        </div>
+        <h4 class="display font-extrabold text-xl mb-2">Multi-sucursal</h4>
+        <p class="text-sm" style="color:var(--ink-soft)">Para cadenas y franquicias. El plan ya está en pricing, falta el modelo.</p>
+      </div>
+
+      <div class="road">
+        <div class="flex items-start justify-between mb-5">
+          <div class="icon-wrap-lg ic-orange">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><line x1="12" y1="15" x2="12" y2="18"/></svg>
+          </div>
+          <span class="pill" style="background:#fff7ed;border-color:#fed7aa;color:#9a3412">Enterprise</span>
+        </div>
+        <h4 class="display font-extrabold text-xl mb-2">2FA + backups</h4>
+        <p class="text-sm" style="color:var(--ink-soft)">Doble factor en el dashboard + dump diario de la base a S3. Cero riesgo.</p>
+      </div>
+
+    </div>
+
+    <!-- CTA -->
+    <div class="card mt-10 p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+      <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full opacity-30"
+           style="background: radial-gradient(circle at 30% 30%, #c8d8fb 0%, #2563eb 60%, #1e3a8a 100%); filter: blur(4px);"></div>
+      <div class="relative flex items-center gap-5">
+        <div class="icon-wrap-lg ic-blue">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </div>
+        <div>
+          <h3 class="display font-extrabold text-2xl mb-1">¿Cuál arrancamos primero?</h3>
+          <p class="text-sm" style="color:var(--ink-soft)">Mi voto: <strong>Google Calendar sync</strong>. Más rinde, menor riesgo, todos lo piden.</p>
+        </div>
+      </div>
+      <a href="#" class="btn-primary relative">
+        Empezar Sprint 3
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ========= FOOTER ========= -->
+<footer class="border-t" style="border-color:var(--line)">
+  <div class="max-w-[1200px] mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center"
+           style="background:linear-gradient(180deg,#2c3a5a 0%,#0c1220 100%); box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 4px 8px rgba(12,18,32,.18);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div>
+        <div class="font-extrabold display">TurneroYa</div>
+        <div class="text-xs" style="color:var(--muted)">SaaS de turnos con bot WhatsApp · Argentina</div>
+      </div>
+    </div>
+    <div class="text-xs mono text-right" style="color:var(--muted)">
+      <div>89 tests · 0 issues · branch main</div>
+      <div>commit 7df8106 · 28 abril 2026</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
