@@ -163,6 +163,7 @@ Reglas importantes:
 - Si el cliente pide algo fuera de tu alcance (consultas médicas, precios especiales, etc.), derivá a que llame al negocio.
 - NUNCA menciones que sos una IA ni que usás tools. Actuá como un asistente real del negocio.
 - Para reagendar, NO crees un booking nuevo + cancel — usá reschedule_booking que mantiene el mismo booking_id (mejor trazabilidad y no perdés el lugar si falla la creación nueva).
+- Si el cliente quiere un horario y NO hay disponibilidad en las fechas que pide, ofrecele entrar a la lista de espera con add_to_waitlist. Le avisamos automáticamente por WhatsApp si se libera algo.
 
 {$welcome}
 PROMPT;
@@ -253,6 +254,22 @@ PROMPT;
                     'required' => ['booking_id', 'new_date', 'new_start_time'],
                 ],
             ],
+            [
+                'name' => 'add_to_waitlist',
+                'description' => 'Agrega al cliente a la lista de espera para un servicio si los horarios buscados están ocupados. Si se libera un slot que matchee, le avisamos automáticamente.',
+                'input_schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'service_id' => ['type' => 'string'],
+                        'professional_id' => ['type' => 'string', 'description' => 'opcional'],
+                        'preferred_date_from' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
+                        'preferred_date_to' => ['type' => 'string', 'description' => 'opcional YYYY-MM-DD'],
+                        'preferred_time_from' => ['type' => 'string', 'description' => 'opcional HH:MM (solo me sirve a partir de)'],
+                        'preferred_time_to' => ['type' => 'string', 'description' => 'opcional HH:MM'],
+                    ],
+                    'required' => ['service_id', 'preferred_date_from'],
+                ],
+            ],
         ];
     }
 
@@ -270,6 +287,7 @@ PROMPT;
                 'get_client_bookings' => $this->toolGetClientBookings($whatsappNumber),
                 'cancel_booking' => $this->toolCancelBooking((string) ($input['booking_id'] ?? '')),
                 'reschedule_booking' => $this->toolRescheduleBooking($input),
+                'add_to_waitlist' => $this->toolAddToWaitlist($input, $whatsappNumber),
                 default => ['error' => 'Tool desconocida: ' . $name],
             };
         } catch (\Throwable $e) {
@@ -402,5 +420,29 @@ PROMPT;
             'new_date' => $newDate,
             'new_start_time' => $newStartTime,
         ];
+    }
+
+    private function toolAddToWaitlist(array $input, string $whatsappNumber): array
+    {
+        $client = Client::findByPhoneOrWhatsapp($this->businessId, $whatsappNumber);
+        if (!$client) {
+            return ['error' => 'Necesitás haber tenido un turno previo o registrarte primero.'];
+        }
+        if (empty($input['service_id']) || empty($input['preferred_date_from'])) {
+            return ['error' => 'Faltan datos: service_id y preferred_date_from'];
+        }
+
+        $waitlist = new WaitlistService($this->businessId);
+        $id = $waitlist->addToWaitlist([
+            'client_id' => $client['id'],
+            'service_id' => (string) $input['service_id'],
+            'professional_id' => isset($input['professional_id']) ? (string) $input['professional_id'] : null,
+            'preferred_date_from' => (string) $input['preferred_date_from'],
+            'preferred_date_to' => isset($input['preferred_date_to']) ? (string) $input['preferred_date_to'] : null,
+            'preferred_time_from' => isset($input['preferred_time_from']) ? (string) $input['preferred_time_from'] : null,
+            'preferred_time_to' => isset($input['preferred_time_to']) ? (string) $input['preferred_time_to'] : null,
+            'source' => 'WHATSAPP_BOT',
+        ]);
+        return ['success' => true, 'waitlist_id' => $id];
     }
 }

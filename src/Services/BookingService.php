@@ -104,6 +104,13 @@ final class BookingService
             'type' => 'booking_cancelled',
             'metadata' => json_encode(['booking_id' => $bookingId, 'reason' => $reason]),
         ]);
+
+        // Notificar a la lista de espera (best-effort, no falla el cancel si tira)
+        try {
+            (new WaitlistService($this->businessId))->notifyOnSlotFreed($bookingId);
+        } catch (\Throwable $e) {
+            error_log('[BookingService] waitlist notify failed: ' . $e->getMessage());
+        }
     }
 
     public function reschedule(string $bookingId, string $newDate, string $newStartTime): void
@@ -125,6 +132,11 @@ final class BookingService
         if (!$start) throw new \RuntimeException('Fecha inválida');
         $end = $start->add(new DateInterval('PT' . ((int) $service['duration']) . 'M'));
 
+        // Datos del slot original — el reschedule libera ese hueco, así que
+        // también puede disparar waitlist.
+        $oldDate = (string) $booking['date'];
+        $oldStart = substr((string) $booking['start_time'], 0, 5);
+
         Booking::update($bookingId, [
             'date' => $start->format('Y-m-d'),
             'start_time' => $start->format('H:i'),
@@ -132,5 +144,17 @@ final class BookingService
             'status' => 'CONFIRMED',
             'reminder_sent' => false,
         ]);
+
+        // Notificar waitlist sobre el slot viejo que quedó libre
+        try {
+            (new WaitlistService($this->businessId))->notifyOnSlotFreedRaw(
+                (string) $booking['service_id'],
+                $booking['professional_id'] ?? null,
+                $oldDate,
+                $oldStart
+            );
+        } catch (\Throwable $e) {
+            error_log('[BookingService] waitlist notify failed (reschedule): ' . $e->getMessage());
+        }
     }
 }
