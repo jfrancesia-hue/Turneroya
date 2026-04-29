@@ -15,11 +15,23 @@ use TurneroYa\Models\Business;
  */
 final class MercadoPagoService
 {
+    private bool $configured;
+
     public function __construct()
     {
         $token = (string) config('services.mercadopago.access_token');
-        if ($token) {
+        $this->configured = $token !== '';
+        if ($this->configured) {
             MercadoPagoConfig::setAccessToken($token);
+        }
+    }
+
+    private function ensureConfigured(): void
+    {
+        if (!$this->configured) {
+            throw new \RuntimeException(
+                'MercadoPago no está configurado. Definí MERCADOPAGO_ACCESS_TOKEN en el entorno.'
+            );
         }
     }
 
@@ -29,6 +41,7 @@ final class MercadoPagoService
      */
     public function createDepositPreference(string $bookingId): string
     {
+        $this->ensureConfigured();
         $booking = Booking::findWithRelations($bookingId);
         if (!$booking) throw new \RuntimeException('Booking no encontrado');
         $service = ServiceModel::find($booking['service_id']);

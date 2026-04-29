@@ -63,7 +63,9 @@ final class Database
 
     public static function insert(string $table, array $data): string
     {
+        self::assertSafeIdent($table);
         $keys = array_keys($data);
+        foreach ($keys as $k) self::assertSafeIdent((string) $k);
         $cols = implode(', ', array_map(fn($k) => "\"$k\"", $keys));
         $placeholders = implode(', ', array_map(fn($k) => ":$k", $keys));
         $sql = "INSERT INTO \"$table\" ($cols) VALUES ($placeholders) RETURNING id";
@@ -72,6 +74,8 @@ final class Database
 
     public static function update(string $table, string $id, array $data): int
     {
+        self::assertSafeIdent($table);
+        foreach (array_keys($data) as $k) self::assertSafeIdent((string) $k);
         $sets = implode(', ', array_map(fn($k) => "\"$k\" = :$k", array_keys($data)));
         $data['id'] = $id;
         $sql = "UPDATE \"$table\" SET $sets, \"updated_at\" = NOW() WHERE id = :id";
@@ -80,7 +84,19 @@ final class Database
 
     public static function delete(string $table, string $id): int
     {
+        self::assertSafeIdent($table);
         return self::query("DELETE FROM \"$table\" WHERE id = :id", ['id' => $id])->rowCount();
+    }
+
+    /**
+     * Verifica que un identificador (tabla o columna) solo contenga
+     * caracteres seguros — evita inyecciones via nombres dinámicos.
+     */
+    private static function assertSafeIdent(string $ident): void
+    {
+        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $ident)) {
+            throw new \InvalidArgumentException("Identificador SQL inválido: $ident");
+        }
     }
 
     public static function transaction(callable $callback): mixed

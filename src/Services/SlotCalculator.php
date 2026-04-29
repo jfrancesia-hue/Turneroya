@@ -89,11 +89,15 @@ final class SlotCalculator
                 (int) $business['slot_duration']
             );
             foreach ($slots as $s) {
-                $unified[$s['start']] = [
-                    ...$s,
-                    'professional_id' => $pro['id'],
-                    'professional_name' => $pro['name'],
-                ];
+                // Si dos profesionales tienen el mismo horario libre, gana el primero
+                // que lo reportó (UX: presentamos un único slot por hora).
+                if (!isset($unified[$s['start']])) {
+                    $unified[$s['start']] = [
+                        ...$s,
+                        'professional_id' => $pro['id'],
+                        'professional_name' => $pro['name'],
+                    ];
+                }
             }
         }
         ksort($unified);
@@ -208,9 +212,10 @@ final class SlotCalculator
             return $dt->setTime((int) $dt->format('H'), $minutes, 0);
         }
         $delta = $stepMinutes - $remainder;
-        return $dt->add(new DateInterval('PT' . $delta . 'M'))->setTime(
-            (int) $dt->add(new DateInterval('PT' . $delta . 'M'))->format('H'),
-            (int) $dt->add(new DateInterval('PT' . $delta . 'M'))->format('i'),
+        $aligned = $dt->add(new DateInterval('PT' . $delta . 'M'));
+        return $aligned->setTime(
+            (int) $aligned->format('H'),
+            (int) $aligned->format('i'),
             0
         );
     }

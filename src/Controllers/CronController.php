@@ -18,6 +18,7 @@ final class CronController
         if (!$expected || !hash_equals($expected, (string) $secret)) {
             http_response_code(403);
             json_response(['error' => 'forbidden']);
+            return;
         }
 
         $bookings = Booking::pendingReminders();
@@ -50,6 +51,7 @@ final class CronController
         if (!$expected || !hash_equals($expected, (string) $secret)) {
             http_response_code(403);
             json_response(['error' => 'forbidden']);
+            return;
         }
 
         $businesses = Database::fetchAll(

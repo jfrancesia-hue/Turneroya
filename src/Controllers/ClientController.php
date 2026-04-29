@@ -47,8 +47,7 @@ final class ClientController
     {
         $client = Client::find($params['id']);
         $this->ensureOwned($client);
-        $history = Booking::forBusinessAndDateRange(Auth::businessId(), '2000-01-01', '2099-12-31');
-        $history = array_values(array_filter($history, fn($b) => $b['client_id'] === $client['id']));
+        $history = Booking::forClient(Auth::businessId(), $client['id']);
         return view('dashboard/clients/show', [
             'title' => $client['name'],
             'pageTitle' => $client['name'],

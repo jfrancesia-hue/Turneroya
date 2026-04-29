@@ -53,11 +53,14 @@ final class SubscriptionService
             ? (float) ($plan['price_yearly'] ?? $plan['price_monthly'] * 12)
             : (float) $plan['price_monthly'];
 
-        return Database::transaction(function () use ($businessId, $planId, $billingCycle, $payerEmail, $plan, $amount, $business) {
-            // 1) Crear suscripción en trial
-            $subscriptionId = Subscription::createTrial($businessId, $planId, $billingCycle);
+        // 1) INSERT corto, commit inmediato. La row queda en estado TRIALING
+        //    sin mp_preapproval_id (huérfana hasta que el HTTP termine).
+        $subscriptionId = Subscription::createTrial($businessId, $planId, $billingCycle);
 
-            // 2) Crear preapproval en MercadoPago
+        // 2) HTTP a MercadoPago — fuera de cualquier transacción para no
+        //    mantener locks abiertos durante 10-15s. Si falla, compensamos
+        //    borrando la subscription huérfana antes de propagar el error.
+        try {
             $mpResponse = $this->createMercadoPagoPreapproval(
                 subscriptionId: $subscriptionId,
                 planName: $plan['name'],
@@ -67,27 +70,36 @@ final class SubscriptionService
                 payerEmail: $payerEmail,
                 businessName: $business['name']
             );
+        } catch (\Throwable $e) {
+            try {
+                Database::delete('subscriptions', $subscriptionId);
+            } catch (\Throwable) {
+                // best-effort: si la limpieza falla, dejamos la sub TRIALING
+                // sin mp_preapproval_id; los crons/UI la pueden purgar después.
+            }
+            throw $e;
+        }
 
-            // 3) Guardar IDs de MP en la suscripción
+        // 3) Transacción corta — sin HTTP — para mantener consistencia entre
+        //    subscription y business denormalizado.
+        Database::transaction(function () use ($subscriptionId, $businessId, $planId, $payerEmail, $mpResponse) {
             Subscription::update($subscriptionId, [
                 'mp_preapproval_id' => $mpResponse['id'],
                 'mp_payer_email' => $payerEmail,
                 'mp_init_point' => $mpResponse['init_point'],
             ]);
-
-            // 4) Actualizar el campo plan denormalizado en businesses
             Business::update($businessId, [
                 'plan' => $planId,
                 'current_subscription_id' => $subscriptionId,
                 'billing_email' => $payerEmail,
             ]);
-
-            return [
-                'subscription_id' => $subscriptionId,
-                'init_point' => $mpResponse['init_point'],
-                'preapproval_id' => $mpResponse['id'],
-            ];
         });
+
+        return [
+            'subscription_id' => $subscriptionId,
+            'init_point' => $mpResponse['init_point'],
+            'preapproval_id' => $mpResponse['id'],
+        ];
     }
 
     /**
@@ -345,11 +357,20 @@ final class SubscriptionService
     private function httpRequest(string $method, string $url, ?array $body, string $token): ?array
     {
         $ch = curl_init($url);
+        // Key estable derivada de la operación: si la red duplica el request o
+        // un retry vuelve a llegar con el mismo body, MP deduplica del lado server.
+        // Una operación lógicamente distinta produce una key distinta porque cambia
+        // el body (ej: external_reference, transaction_amount).
+        $idempotencyKey = substr(
+            hash('sha256', $method . '|' . $url . '|' . ($body !== null ? json_encode($body) : '')),
+            0,
+            32
+        );
         $headers = [
             'Authorization: Bearer ' . $token,
             'Content-Type: application/json',
             'Accept: application/json',
-            'X-Idempotency-Key: ' . bin2hex(random_bytes(16)),
+            'X-Idempotency-Key: ' . $idempotencyKey,
         ];
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,

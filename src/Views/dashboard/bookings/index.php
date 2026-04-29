@@ -11,6 +11,7 @@
     <?php endforeach; ?>
 </div>
 
+<?php $pagination = $pagination ?? null; ?>
 <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
     <?php if (empty($bookings)): ?>
         <div class="p-12 text-center text-slate-400">No hay turnos en este filtro.</div>
@@ -49,6 +50,38 @@
             <?php endforeach; ?>
             </tbody>
         </table>
+    <?php endif; ?>
+
+    <?php if ($pagination && $pagination['pages'] > 1): ?>
+        <?php
+            $page = (int) $pagination['page'];
+            $pages = (int) $pagination['pages'];
+            $total = (int) $pagination['total'];
+            $perPage = (int) $pagination['per_page'];
+            $from = ($page - 1) * $perPage + 1;
+            $to = min($page * $perPage, $total);
+            $prev = max(1, $page - 1);
+            $next = min($pages, $page + 1);
+            $base = '?filter=' . urlencode($filter);
+        ?>
+        <div class="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-100 text-sm">
+            <div class="text-slate-500">
+                Mostrando <strong class="text-slate-700"><?= $from ?>–<?= $to ?></strong> de <strong class="text-slate-700"><?= $total ?></strong>
+            </div>
+            <div class="flex items-center gap-2">
+                <?php if ($page > 1): ?>
+                    <a href="<?= $base ?>&page=<?= $prev ?>" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">← Anterior</a>
+                <?php else: ?>
+                    <span class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-300 cursor-not-allowed">← Anterior</span>
+                <?php endif; ?>
+                <span class="px-3 py-1.5 text-slate-500">Página <strong class="text-slate-700"><?= $page ?></strong> de <?= $pages ?></span>
+                <?php if ($page < $pages): ?>
+                    <a href="<?= $base ?>&page=<?= $next ?>" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50">Siguiente →</a>
+                <?php else: ?>
+                    <span class="px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-300 cursor-not-allowed">Siguiente →</span>
+                <?php endif; ?>
+            </div>
+        </div>
     <?php endif; ?>
 </div>
 <?php View::endSection(); ?>

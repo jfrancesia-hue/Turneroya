@@ -20,7 +20,7 @@ final class Session
             'path' => '/',
             'httponly' => true,
             'samesite' => 'Lax',
-            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'secure' => self::isHttps(),
         ]);
         session_name('turneroya_sid');
         session_start();
@@ -35,6 +35,14 @@ final class Session
         } else {
             unset($_SESSION['_flash']);
         }
+    }
+
+    private static function isHttps(): bool
+    {
+        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') return true;
+        $proto = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
+        if (strcasecmp($proto, 'https') === 0) return true;
+        return ($_SERVER['SERVER_PORT'] ?? '') === '443';
     }
 
     public static function get(string $key, mixed $default = null): mixed

@@ -20,18 +20,37 @@ final class BookingController
     {
         $businessId = Auth::businessId();
         $filter = (string) Request::query('filter', 'upcoming');
+        $pagination = null;
+
         if ($filter === 'past') {
-            $bookings = Booking::forBusinessAndDateRange($businessId, '2000-01-01', date('Y-m-d', strtotime('-1 day')));
+            $page = (int) Request::query('page', 1);
+            $paged = Booking::pagedForBusinessAndDateRange(
+                $businessId,
+                '2000-01-01',
+                date('Y-m-d', strtotime('-1 day')),
+                $page,
+                50,
+                'DESC'
+            );
+            $bookings = $paged['rows'];
+            $pagination = [
+                'page' => $paged['page'],
+                'pages' => $paged['pages'],
+                'total' => $paged['total'],
+                'per_page' => $paged['per_page'],
+            ];
         } elseif ($filter === 'today') {
             $bookings = Booking::forBusinessAndDateRange($businessId, date('Y-m-d'), date('Y-m-d'));
         } else {
             $bookings = Booking::forBusinessAndDateRange($businessId, date('Y-m-d'), '2099-12-31');
         }
+
         return view('dashboard/bookings/index', [
             'title' => 'Turnos',
             'pageTitle' => 'Turnos',
             'bookings' => $bookings,
             'filter' => $filter,
+            'pagination' => $pagination,
         ]);
     }
 

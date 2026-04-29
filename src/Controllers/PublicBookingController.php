@@ -5,6 +5,7 @@ namespace TurneroYa\Controllers;
 
 use TurneroYa\Core\Request;
 use TurneroYa\Core\Session;
+use TurneroYa\Core\SignedToken;
 use TurneroYa\Core\Validator;
 use TurneroYa\Models\Business;
 use TurneroYa\Models\Service;
@@ -29,19 +30,33 @@ final class PublicBookingController
             'title' => 'Reservar en ' . $business['name'],
             'business' => $business,
             'services' => $services,
+            'bookingToken' => SignedToken::issue('booking:' . $business['slug']),
         ]);
+    }
+
+    /**
+     * Verifica el token firmado emitido en show(). El token vincula al slug
+     * del negocio y caduca a la hora — suficiente para mitigar POSTs
+     * cross-site automatizados sin requerir sesión.
+     */
+    private function verifyToken(string $slug): bool
+    {
+        $token = (string) (Request::header('X-Booking-Token') ?? Request::input('_t', ''));
+        return $token !== '' && SignedToken::verify('booking:' . $slug, $token);
     }
 
     public function slots(array $params): void
     {
+        if (!$this->verifyToken($params['slug'])) { json_response(['error' => 'invalid_token'], 403); return; }
+
         $business = Business::findBySlug($params['slug']);
-        if (!$business) json_response(['error' => 'not_found'], 404);
+        if (!$business) { json_response(['error' => 'not_found'], 404); return; }
 
         $serviceId = (string) Request::input('service_id');
         $professionalId = Request::input('professional_id') ?: null;
         $date = (string) Request::input('date');
 
-        if (!$serviceId || !$date) json_response(['error' => 'missing_params'], 400);
+        if (!$serviceId || !$date) { json_response(['error' => 'missing_params'], 400); return; }
 
         $calculator = new SlotCalculator($business['id']);
         $slots = $calculator->getAvailableSlots($date, $serviceId, $professionalId);
@@ -60,8 +75,10 @@ final class PublicBookingController
 
     public function confirm(array $params): void
     {
+        if (!$this->verifyToken($params['slug'])) { json_response(['error' => 'invalid_token'], 403); return; }
+
         $business = Business::findBySlug($params['slug']);
-        if (!$business) json_response(['error' => 'not_found'], 404);
+        if (!$business) { json_response(['error' => 'not_found'], 404); return; }
 
         $data = [
             'service_id' => (string) Request::input('service_id'),
@@ -82,7 +99,7 @@ final class PublicBookingController
             'client_phone' => 'required|min:6|max:30',
             'client_email' => 'email',
         ]);
-        if ($v->fails()) json_response(['error' => $v->firstError()], 422);
+        if ($v->fails()) { json_response(['error' => $v->firstError()], 422); return; }
 
         try {
             // Buscar/crear cliente

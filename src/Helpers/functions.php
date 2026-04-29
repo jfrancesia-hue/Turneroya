@@ -53,9 +53,17 @@ if (!function_exists('redirect')) {
 }
 
 if (!function_exists('back')) {
-    function back(): never {
-        $ref = $_SERVER['HTTP_REFERER'] ?? '/';
-        redirect($ref);
+    function back(string $fallback = '/'): never {
+        $ref = $_SERVER['HTTP_REFERER'] ?? '';
+        if ($ref !== '') {
+            $refHost = parse_url($ref, PHP_URL_HOST);
+            $appUrl = $_ENV['APP_URL'] ?? getenv('APP_URL') ?: '';
+            $appHost = $appUrl !== '' ? parse_url($appUrl, PHP_URL_HOST) : ($_SERVER['HTTP_HOST'] ?? '');
+            if ($refHost !== null && $appHost !== '' && strcasecmp($refHost, (string) $appHost) === 0) {
+                redirect($ref);
+            }
+        }
+        redirect($fallback);
     }
 }
 

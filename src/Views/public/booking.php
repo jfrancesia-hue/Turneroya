@@ -25,7 +25,7 @@
             <img src="<?= e($business['logo']) ?>" alt="<?= e($business['name']) ?>" class="w-24 h-24 rounded-2xl mx-auto mb-4 object-cover ring-4 ring-white/20 shadow-2xl">
         <?php else: ?>
             <div class="w-24 h-24 rounded-2xl mx-auto mb-4 bg-white/10 backdrop-blur border-2 border-white/20 flex items-center justify-center text-4xl font-extrabold shadow-2xl">
-                <?= strtoupper(substr($business['name'], 0, 1)) ?>
+                <?= e(strtoupper(mb_substr((string) $business['name'], 0, 1))) ?>
             </div>
         <?php endif; ?>
         <h1 class="text-3xl font-extrabold tracking-tight"><?= e($business['name']) ?></h1>
@@ -323,6 +323,7 @@ function bookingApp() {
     const today = new Date().toISOString().slice(0,10);
     const max = new Date();
     max.setDate(max.getDate() + <?= (int) $business['max_advance_days'] ?>);
+    const csrfToken = <?= json_encode($bookingToken ?? '') ?>;
     return {
         step: 1,
         today,
@@ -343,7 +344,7 @@ function bookingApp() {
             try {
                 const res = await fetch('/book/<?= e($business['slug']) ?>/slots', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Booking-Token': csrfToken},
                     body: new URLSearchParams({service_id: svc.id, date: today})
                 });
                 const data = await res.json();
@@ -368,7 +369,7 @@ function bookingApp() {
             try {
                 const res = await fetch('/book/<?= e($business['slug']) ?>/slots', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Booking-Token': csrfToken},
                     body: new URLSearchParams({
                         service_id: this.service.id,
                         professional_id: this.professional?.id || '',
@@ -408,7 +409,7 @@ function bookingApp() {
                 });
                 const res = await fetch('/book/<?= e($business['slug']) ?>/confirm', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-Booking-Token': csrfToken},
                     body: payload
                 });
                 const data = await res.json();

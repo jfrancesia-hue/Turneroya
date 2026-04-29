@@ -28,6 +28,23 @@ final class Booking
         );
     }
 
+    public static function forClient(string $businessId, string $clientId, int $limit = 200): array
+    {
+        $limit = max(1, min($limit, 1000));
+        return Database::fetchAll(
+            'SELECT b.*,
+                    s.name AS service_name, s.color AS service_color, s.duration AS service_duration,
+                    p.name AS professional_name, p.color AS professional_color
+             FROM bookings b
+             LEFT JOIN services s ON s.id = b.service_id
+             LEFT JOIN professionals p ON p.id = b.professional_id
+             WHERE b.business_id = :b AND b.client_id = :c
+             ORDER BY b.date DESC, b.start_time DESC
+             LIMIT ' . $limit,
+            ['b' => $businessId, 'c' => $clientId]
+        );
+    }
+
     public static function forBusinessAndDateRange(string $businessId, string $from, string $to): array
     {
         return Database::fetchAll(
@@ -43,6 +60,53 @@ final class Booking
              ORDER BY b.date ASC, b.start_time ASC',
             ['b' => $businessId, 'from' => $from, 'to' => $to]
         );
+    }
+
+    /**
+     * Versión paginada del listado por rango. Devuelve rows + metadata.
+     * Útil para vistas históricas donde el resultset puede ser grande.
+     */
+    public static function pagedForBusinessAndDateRange(
+        string $businessId,
+        string $from,
+        string $to,
+        int $page = 1,
+        int $perPage = 50,
+        string $order = 'ASC'
+    ): array {
+        $page = max(1, $page);
+        $perPage = max(1, min($perPage, 200));
+        $order = strtoupper($order) === 'DESC' ? 'DESC' : 'ASC';
+        $offset = ($page - 1) * $perPage;
+
+        $total = (int) Database::fetchColumn(
+            'SELECT COUNT(*) FROM bookings
+             WHERE business_id = :b AND date BETWEEN :from AND :to',
+            ['b' => $businessId, 'from' => $from, 'to' => $to]
+        );
+
+        $rows = Database::fetchAll(
+            'SELECT b.*,
+                    c.name AS client_name, c.phone AS client_phone,
+                    s.name AS service_name, s.color AS service_color, s.duration AS service_duration,
+                    p.name AS professional_name, p.color AS professional_color
+             FROM bookings b
+             LEFT JOIN clients c ON c.id = b.client_id
+             LEFT JOIN services s ON s.id = b.service_id
+             LEFT JOIN professionals p ON p.id = b.professional_id
+             WHERE b.business_id = :b AND b.date BETWEEN :from AND :to
+             ORDER BY b.date ' . $order . ', b.start_time ' . $order . '
+             LIMIT ' . $perPage . ' OFFSET ' . $offset,
+            ['b' => $businessId, 'from' => $from, 'to' => $to]
+        );
+
+        return [
+            'rows' => $rows,
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'pages' => max(1, (int) ceil($total / $perPage)),
+        ];
     }
 
     public static function forDateAndProfessional(string $businessId, string $date, ?string $professionalId): array
