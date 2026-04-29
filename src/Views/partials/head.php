@@ -91,9 +91,12 @@ tailwind.config = {
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
+
+<link rel="stylesheet" href="/assets/css/landing.css?v=6">
+<script defer src="/assets/js/landing.js?v=6"></script>
 
 <style>
     html { scroll-behavior: smooth; }

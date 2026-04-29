@@ -17,3 +17,9 @@ Thumbs.db
 composer.lock
 .phpunit.cache/
 .phpunit.result.cache
+
+# Local dev only — front controller para `php -S`
+/dev-router.php
+
+# Multi-agent orchestration state (oh-my-claudecode)
+/.omc/

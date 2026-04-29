@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="TurneroYa hero">
+  <defs>
+    <radialGradient id="g1" cx="0%" cy="0%" r="120%">
+      <stop offset="0%"  stop-color="#1E1B4B"/>
+      <stop offset="55%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="50%" cy="30%" r="60%">
+      <stop offset="0%"  stop-color="#4F46E5" stop-opacity="0.45"/>
+      <stop offset="70%" stop-color="#4F46E5" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g3" cx="80%" cy="80%" r="55%">
+      <stop offset="0%"  stop-color="#A855F7" stop-opacity="0.35"/>
+      <stop offset="70%" stop-color="#A855F7" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path d="M 80 0 L 0 0 0 80" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#g1)"/>
+  <rect width="1600" height="900" fill="url(#grid)"/>
+  <rect width="1600" height="900" fill="url(#g2)"/>
+  <rect width="1600" height="900" fill="url(#g3)"/>
+</svg>
