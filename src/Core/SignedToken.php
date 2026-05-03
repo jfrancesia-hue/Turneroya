@@ -50,15 +50,22 @@ final class SignedToken
 
     private static function secret(): string
     {
-        $key = (string) ($_ENV['APP_KEY'] ?? getenv('APP_KEY') ?? '');
+        $systemKey = getenv('APP_KEY');
+        $key = (string) ($systemKey !== false ? $systemKey : ($_ENV['APP_KEY'] ?? ''));
         if ($key !== '') return $key;
+
+        $systemEnv = getenv('APP_ENV');
+        $env = (string) ($systemEnv !== false ? $systemEnv : ($_ENV['APP_ENV'] ?? 'production'));
+        if ($env === 'production') {
+            throw new \RuntimeException('APP_KEY no esta configurado.');
+        }
 
         // Fallback determinístico: derivamos un secreto estable de otros valores
         // del entorno cuando APP_KEY aún no fue configurado. No es ideal, pero
         // evita romper deploys que vienen sin APP_KEY del .env.example.
-        $material = ($_ENV['CRON_SECRET'] ?? getenv('CRON_SECRET') ?: '') . '|'
-                  . ($_ENV['DB_PASSWORD'] ?? getenv('DB_PASSWORD') ?: '') . '|'
-                  . ($_ENV['APP_URL']     ?? getenv('APP_URL')     ?: '');
+        $material = (getenv('CRON_SECRET') ?: ($_ENV['CRON_SECRET'] ?? '')) . '|'
+                  . (getenv('DB_PASSWORD') ?: ($_ENV['DB_PASSWORD'] ?? '')) . '|'
+                  . (getenv('APP_URL')     ?: ($_ENV['APP_URL']     ?? ''));
         if (trim($material, '|') === '') {
             throw new \RuntimeException('APP_KEY no está configurado y no hay secretos derivables del entorno.');
         }

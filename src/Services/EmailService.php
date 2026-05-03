@@ -95,8 +95,8 @@ final class EmailService
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->CharSet = 'UTF-8';
         $mail->setFrom(
-            (string) config('services.mail.from_address', 'noreply@turneroya.app'),
-            (string) config('services.mail.from_name', 'TurneroYa')
+            (string) config('services.mail.from_address', 'noreply@reservia.app'),
+            (string) config('services.mail.from_name', 'Reservia')
         );
         $mail->addAddress($to);
         $mail->isHTML(true);
@@ -117,8 +117,8 @@ final class EmailService
 
         $from = sprintf(
             '%s <%s>',
-            (string) config('services.mail.from_name', 'TurneroYa'),
-            (string) config('services.mail.from_address', 'noreply@turneroya.app')
+            (string) config('services.mail.from_name', 'Reservia'),
+            (string) config('services.mail.from_address', 'noreply@reservia.app')
         );
 
         $ch = curl_init('https://api.resend.com/emails');

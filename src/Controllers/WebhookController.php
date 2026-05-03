@@ -140,10 +140,15 @@ final class WebhookController
     public function mercadopago(): void
     {
         $body = file_get_contents('php://input') ?: '';
-        error_log('[MercadoPago webhook] ' . substr($body, 0, 500));
 
         // 1) Verificar firma PRIMERO (si hay secret configurado), antes de parsear nada más
         $secret = (string) (config('services.mercadopago.webhook_secret') ?? '');
+        if ($secret === '' && config('app.env') === 'production') {
+            error_log('[MP webhook] MERCADOPAGO_WEBHOOK_SECRET no configurado');
+            json_response(['error' => 'webhook_secret_not_configured'], 500);
+            return;
+        }
+
         if ($secret !== '') {
             $xSignature = (string) (Request::header('X-Signature') ?? '');
             $xRequestId = (string) (Request::header('X-Request-Id') ?? '');
@@ -172,10 +177,11 @@ final class WebhookController
             $topic = $topic ?: (string) ($payloadArr['type'] ?? $payloadArr['topic'] ?? '');
             $resourceId = $resourceId ?: (string) ($payloadArr['data']['id'] ?? $payloadArr['id'] ?? '');
         }
+        error_log('[MercadoPago webhook] topic=' . ($topic ?: '-') . ' resource_id=' . ($resourceId ?: '-') . ' bytes=' . strlen($body));
 
         // 3) Validar payload — si falta topic o resourceId, devolver 400
         if (!$topic || !$resourceId) {
-            error_log('[MP webhook] payload incompleto: ' . substr($body, 0, 500));
+            error_log('[MP webhook] payload incompleto bytes=' . strlen($body));
             json_response(['error' => 'incomplete_payload'], 400);
             return;
         }

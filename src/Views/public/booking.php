@@ -312,7 +312,7 @@
             Datos protegidos
         </span>
         <span>·</span>
-        <span>Powered by <span class="font-bold text-brand-600">TurneroYa</span></span>
+        <span>Powered by <span class="font-bold text-brand-600">Reservia</span></span>
     </div>
 </div>
 

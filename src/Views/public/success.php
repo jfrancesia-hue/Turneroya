@@ -137,7 +137,7 @@
     </div>
 
     <div class="mt-10 text-center text-xs text-ink-400">
-        Powered by <span class="font-bold text-brand-600">TurneroYa</span>
+        Powered by <span class="font-bold text-brand-600">Reservia</span>
     </div>
 </div>
 </div>

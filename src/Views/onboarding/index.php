@@ -23,7 +23,7 @@
             <span class="text-[11px] font-bold uppercase tracking-wider text-brand-700">Configuración inicial</span>
         </div>
         <h1 class="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight text-ink-900">
-            Bienvenido a <span class="text-gradient">TurneroYa</span>
+            Bienvenido a <span class="text-gradient">Reservia</span>
         </h1>
         <p class="mt-3 text-ink-500 text-base">Configuremos tu negocio en menos de 3 minutos ⏱️</p>
     </div>

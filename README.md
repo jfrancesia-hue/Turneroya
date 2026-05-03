@@ -1,4 +1,4 @@
-# TurneroYa
+# Reservia
 
 **SaaS de gestión de turnos con IA por WhatsApp.** Panel de administración, página pública de reservas, calendario inteligente, recordatorios automáticos y chatbot alimentado por **Claude (Anthropic)** que toma turnos por WhatsApp.
 
@@ -20,7 +20,7 @@ Desarrollado en **PHP 8.2+ puro** (sin frameworks) + **PostgreSQL**.
 ## Estructura
 
 ```
-TurneroYa/
+Reservia/
 ├── public/
 │   ├── index.php            # Front controller
 │   ├── .htaccess            # Rewrite a index.php

@@ -14,7 +14,9 @@ use Dotenv\Dotenv;
 use TurneroYa\Core\Config;
 use TurneroYa\Core\Database;
 
-Dotenv::createImmutable(BASE_PATH)->load();
+if (file_exists(BASE_PATH . '/.env')) {
+    Dotenv::createImmutable(BASE_PATH)->load();
+}
 Config::load(BASE_PATH . '/config');
 
 /**

@@ -1,19 +1,19 @@
-# TurneroYa - Render Blueprint
+# Reservia - Render Blueprint
 # Deploy vía: https://dashboard.render.com → New → Blueprint → conectar repo
 #
 # Crea:
-#   - Web Service: turneroya-app (Docker, $7/mo Starter)
-#   - Database:   turneroya-db  (Postgres 16, $7/mo Starter)
-#   - Cron Job:   turneroya-reminders (cada hora)
+#   - Web Service: reservia-app (Docker, $7/mo Starter)
+#   - Database:   reservia-db  (Postgres 16, $7/mo Starter)
+#   - Cron Job:   reservia-reminders (cada hora)
 
 services:
   - type: web
-    name: turneroya-app
+    name: reservia-app
     runtime: docker
     plan: starter
     region: oregon
     branch: main
-    healthCheckPath: /
+    healthCheckPath: /health
     dockerfilePath: ./Dockerfile
     envVars:
       - key: APP_ENV
@@ -24,27 +24,29 @@ services:
         value: America/Argentina/Buenos_Aires
       - key: APP_URL
         sync: false   # se setea manual con el dominio definitivo
+      - key: APP_KEY
+        generateValue: true
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
         fromDatabase:
-          name: turneroya-db
+          name: reservia-db
           property: host
       - key: DB_PORT
         fromDatabase:
-          name: turneroya-db
+          name: reservia-db
           property: port
       - key: DB_DATABASE
         fromDatabase:
-          name: turneroya-db
+          name: reservia-db
           property: database
       - key: DB_USERNAME
         fromDatabase:
-          name: turneroya-db
+          name: reservia-db
           property: user
       - key: DB_PASSWORD
         fromDatabase:
-          name: turneroya-db
+          name: reservia-db
           property: password
       # Estas deben cargarse manualmente en el Dashboard de Render:
       - key: ANTHROPIC_API_KEY
@@ -57,9 +59,17 @@ services:
         sync: false
       - key: TWILIO_WHATSAPP_FROM
         sync: false
+      - key: TWILIO_VALIDATE_SIGNATURE
+        value: "true"
+      - key: TWILIO_REMINDER_CONTENT_SID
+        sync: false
+      - key: TWILIO_CONFIRMATION_CONTENT_SID
+        sync: false
       - key: MERCADOPAGO_ACCESS_TOKEN
         sync: false
       - key: MERCADOPAGO_PUBLIC_KEY
+        sync: false
+      - key: MERCADOPAGO_WEBHOOK_SECRET
         sync: false
       - key: CRON_SECRET
         generateValue: true
@@ -74,12 +84,12 @@ services:
       - key: MAIL_PASSWORD
         sync: false
       - key: MAIL_FROM_ADDRESS
-        value: noreply@turneroya.app
+        value: noreply@reservia.app
       - key: MAIL_FROM_NAME
-        value: TurneroYa
+        value: Reservia
 
   - type: cron
-    name: turneroya-reminders
+    name: reservia-reminders
     runtime: docker
     plan: starter
     region: oregon
@@ -88,28 +98,84 @@ services:
     schedule: "0 * * * *"   # cada hora en punto
     dockerCommand: php /var/www/html/scripts/reminders_cron.php
     envVars:
-      - fromGroup: turneroya-shared   # (opcional: reusar env group)
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_TIMEZONE
+        value: America/Argentina/Buenos_Aires
       - key: DB_HOST
         fromDatabase:
-          name: turneroya-db
+          name: reservia-db
           property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: reservia-db
+          property: port
       - key: DB_DATABASE
         fromDatabase:
-          name: turneroya-db
+          name: reservia-db
           property: database
       - key: DB_USERNAME
         fromDatabase:
-          name: turneroya-db
+          name: reservia-db
           property: user
       - key: DB_PASSWORD
         fromDatabase:
-          name: turneroya-db
+          name: reservia-db
+          property: password
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false
+      - key: TWILIO_REMINDER_CONTENT_SID
+        sync: false
+      - key: TWILIO_CONFIRMATION_CONTENT_SID
+        sync: false
+
+  - type: cron
+    name: reservia-expire-payments
+    runtime: docker
+    plan: starter
+    region: oregon
+    branch: main
+    dockerfilePath: ./Dockerfile
+    schedule: "*/5 * * * *"
+    dockerCommand: php /var/www/html/scripts/expire_pending_payments.php
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_TIMEZONE
+        value: America/Argentina/Buenos_Aires
+      - key: DB_HOST
+        fromDatabase:
+          name: reservia-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: reservia-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: reservia-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: reservia-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: reservia-db
           property: password
 
 databases:
-  - name: turneroya-db
-    databaseName: turneroya
-    user: turneroya
+  - name: reservia-db
+    databaseName: reservia
+    user: reservia
     plan: starter
     region: oregon
     postgresMajorVersion: "16"

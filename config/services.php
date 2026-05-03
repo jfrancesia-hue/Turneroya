@@ -26,8 +26,8 @@ return [
         'port' => env('MAIL_PORT', 587),
         'username' => env('MAIL_USERNAME'),
         'password' => env('MAIL_PASSWORD'),
-        'from_address' => env('MAIL_FROM_ADDRESS', 'noreply@turneroya.app'),
-        'from_name' => env('MAIL_FROM_NAME', 'TurneroYa'),
+        'from_address' => env('MAIL_FROM_ADDRESS', 'noreply@reservia.app'),
+        'from_name' => env('MAIL_FROM_NAME', 'Reservia'),
         'resend_api_key' => env('RESEND_API_KEY'),
     ],
     'cron' => [

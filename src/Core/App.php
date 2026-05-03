@@ -33,6 +33,7 @@ final class App
 
         // 2) Cargar config
         Config::load($this->basePath . '/config');
+        $this->assertProductionConfig();
 
         // 3) Timezone
         date_default_timezone_set((string) Config::get('app.timezone', 'America/Argentina/Buenos_Aires'));
@@ -66,5 +67,48 @@ final class App
     {
         $routes = require $this->basePath . '/config/routes.php';
         $routes($this->router);
+    }
+
+    private function assertProductionConfig(): void
+    {
+        if (PHP_SAPI === 'cli' || Config::get('app.env') !== 'production') {
+            return;
+        }
+
+        $required = [
+            'APP_KEY',
+            'APP_URL',
+            'CRON_SECRET',
+            'ANTHROPIC_API_KEY',
+            'TWILIO_ACCOUNT_SID',
+            'TWILIO_AUTH_TOKEN',
+            'TWILIO_WHATSAPP_FROM',
+            'MERCADOPAGO_ACCESS_TOKEN',
+            'MERCADOPAGO_PUBLIC_KEY',
+            'MERCADOPAGO_WEBHOOK_SECRET',
+        ];
+
+        $missing = [];
+        foreach ($required as $key) {
+            $systemValue = getenv($key);
+            $value = (string) ($systemValue !== false ? $systemValue : ($_ENV[$key] ?? ''));
+            if ($value === '' || str_contains($value, 'xxxx') || str_contains($value, 'cambiar-en-produccion') || str_starts_with($value, 'TEST-')) {
+                $missing[] = $key;
+            }
+        }
+
+        $systemAppUrl = getenv('APP_URL');
+        $appUrl = (string) ($systemAppUrl !== false ? $systemAppUrl : ($_ENV['APP_URL'] ?? ''));
+        if (str_contains($appUrl, 'localhost') || str_contains($appUrl, '127.0.0.1')) {
+            $missing[] = 'APP_URL publico';
+        }
+
+        if (Config::get('app.debug') !== false) {
+            $missing[] = 'APP_DEBUG=false';
+        }
+
+        if ($missing !== []) {
+            throw new \RuntimeException('Configuracion de produccion incompleta: ' . implode(', ', $missing));
+        }
     }
 }

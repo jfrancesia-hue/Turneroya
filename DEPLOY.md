@@ -1,4 +1,4 @@
-# TurneroYa · Guía de Deploy
+# Reservia · Guía de Deploy
 
 Esta guía cubre 3 opciones: **Render (recomendado)**, **Hostinger VPS** y **desarrollo local con Docker**.
 
@@ -12,24 +12,30 @@ Render soporta Docker nativamente, Postgres administrado y cron jobs. El `render
 1. Ir a https://dashboard.render.com/blueprints
 2. **New Blueprint Instance** → conectar GitHub → elegir `jfrancesia-hue/Turneroya` → rama `main`.
 3. Render detecta `render.yaml` y propone:
-   - Web Service: `turneroya-app` ($7/mo)
-   - Database: `turneroya-db` Postgres 16 ($7/mo, 256MB RAM, 1GB storage)
-   - Cron Job: `turneroya-reminders` (cada hora)
+   - Web Service: `reservia-app` ($7/mo)
+   - Database: `reservia-db` Postgres 16 ($7/mo, 256MB RAM, 1GB storage)
+   - Cron Job: `reservia-reminders` (cada hora)
+   - Cron Job: `reservia-expire-payments` (cada 5 minutos)
 4. **Apply** — el primer build tarda 3-5 minutos.
 
-### Paso 2 — Cargar secretos (Dashboard → turneroya-app → Environment)
+### Paso 2 — Cargar secretos (Dashboard → reservia-app → Environment)
 Las variables marcadas `sync: false` deben cargarse a mano:
 
 | Variable | Dónde sacarla |
 |---|---|
-| `APP_URL` | `https://turneroya-app.onrender.com` (o tu dominio) |
+| `APP_URL` | `https://reservia-app.onrender.com` (o tu dominio) |
+| `APP_KEY` | generado por Render; no lo cambies despues del primer deploy |
 | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys |
 | `TWILIO_ACCOUNT_SID` | console.twilio.com → Account Info |
 | `TWILIO_AUTH_TOKEN` | console.twilio.com → Account Info |
 | `TWILIO_WHATSAPP_FROM` | `whatsapp:+14155238886` (sandbox) o tu número aprobado |
 | `MERCADOPAGO_ACCESS_TOKEN` | mercadopago.com.ar/developers → Credenciales de producción |
 | `MERCADOPAGO_PUBLIC_KEY` | idem |
+| `TWILIO_REMINDER_CONTENT_SID` / `TWILIO_CONFIRMATION_CONTENT_SID` | opcional, Content Templates aprobados |
+| `MERCADOPAGO_WEBHOOK_SECRET` | MercadoPago Developers -> Webhooks -> secret de firma |
 | `MAIL_HOST` / `MAIL_USERNAME` / `MAIL_PASSWORD` | SMTP (Resend/Mailgun/Gmail) |
+
+> Produccion no arranca si falta `APP_KEY`, `APP_URL`, credenciales de IA/Twilio/MercadoPago, `MERCADOPAGO_WEBHOOK_SECRET`, `CRON_SECRET` o si `APP_DEBUG` no esta en `false`.
 
 ### Paso 3 — Migraciones
 El `entrypoint.sh` corre `php scripts/migrate.php` automáticamente en cada deploy (idempotente). Al finalizar el primer deploy ya tenés la DB con schema + plans seedados.
@@ -41,26 +47,27 @@ php scripts/seed.php
 ```
 
 ### Paso 4 — Configurar dominio
-1. Dashboard → `turneroya-app` → **Settings** → **Custom Domains** → agregar `turneroya.app` y `www.turneroya.app`.
+1. Dashboard → `reservia-app` → **Settings** → **Custom Domains** → agregar `reservia.app` y `www.reservia.app`.
 2. Agregar los DNS records (CNAME o ALIAS) que indica Render en tu proveedor de dominio.
 3. SSL se provisiona automático (Let's Encrypt).
 4. Actualizar `APP_URL` en Environment con el dominio final.
 
 ### Paso 5 — Webhooks de Twilio y MercadoPago
 **Twilio WhatsApp (Sandbox o Production):**
-- URL: `https://turneroya.app/api/webhook/whatsapp`
+- URL: `https://reservia.app/api/webhook/whatsapp`
 - Method: `POST`
 - Configurar en: console.twilio.com → Messaging → Settings → WhatsApp Sandbox (o Sender) → When a message comes in
 
 **MercadoPago (Suscripciones + Señas):**
-- URL: `https://turneroya.app/api/webhook/mercadopago`
+- URL: `https://reservia.app/api/webhook/mercadopago`
+- Copiar el secret de firma en `MERCADOPAGO_WEBHOOK_SECRET`. En produccion los webhooks sin firma valida responden `403`.
 - Configurar en: mercadopago.com.ar/developers → Tu App → Webhooks → Eventos: `payment`, `subscription_preapproval`, `subscription_authorized_payment`
 
 ### Paso 6 — Verificar
-- `https://turneroya.app` → landing
-- `https://turneroya.app/pricing` → planes
-- `https://turneroya.app/register` → crear cuenta
-- `https://turneroya.app/dashboard/billing` → contratar plan (redirige a MP)
+- `https://reservia.app` → landing
+- `https://reservia.app/pricing` → planes
+- `https://reservia.app/register` → crear cuenta
+- `https://reservia.app/dashboard/billing` → contratar plan (redirige a MP)
 
 ---
 
@@ -97,7 +104,7 @@ sudo chmod -R 775 storage
 # /etc/nginx/sites-available/turneroya
 server {
     listen 80;
-    server_name turneroya.app www.turneroya.app;
+    server_name reservia.app www.reservia.app;
     root /var/www/turneroya/public;
     index index.php;
     client_max_body_size 20m;
@@ -116,7 +123,7 @@ server {
 ```bash
 sudo ln -s /etc/nginx/sites-available/turneroya /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d turneroya.app -d www.turneroya.app
+sudo certbot --nginx -d reservia.app -d www.reservia.app
 ```
 
 ### Cron de recordatorios
@@ -148,9 +155,11 @@ docker compose exec app php scripts/seed.php   # datos demo
 - [ ] `/register` crea usuario + onboarding funciona
 - [ ] `/dashboard/billing` redirige a MercadoPago al contratar
 - [ ] Webhook Twilio apunta a la URL correcta (test enviando msg al sandbox)
-- [ ] Webhook MP configurado con eventos `subscription_preapproval` + `subscription_authorized_payment`
+- [ ] Webhook MP configurado con eventos `payment`, `subscription_preapproval` + `subscription_authorized_payment`
+- [ ] `MERCADOPAGO_WEBHOOK_SECRET` cargado y firma validada
 - [ ] SSL válido (candado verde)
 - [ ] Cron de recordatorios se ejecutó al menos una vez (ver `storage/logs/reminders.log`)
+- [ ] Cron de expiracion de pagos pendientes corre cada 5 minutos
 - [ ] `/terms` y `/privacy` cargan
 
 ## Monitoreo sugerido

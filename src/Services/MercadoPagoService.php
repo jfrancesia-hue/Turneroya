@@ -72,7 +72,7 @@ final class MercadoPagoService
             'notification_url' => url('/api/webhook/mercadopago'),
             'payer' => [
                 'name' => $booking['client_name'],
-                'email' => $booking['client_email'] ?? 'cliente@turneroya.app',
+                'email' => $booking['client_email'] ?? 'cliente@reservia.app',
             ],
         ]);
 

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   TurneroYa · Landing JS — interacciones de impacto visual.
+   Reservia - Landing JS: interacciones de impacto visual.
    Vanilla, sin librerías. Idempotente: si un elemento no existe, no rompe.
    --------------------------------------------------------------------------
    - Spotlight cursor en hero

@@ -12,7 +12,7 @@
     <h1 class="text-display-sm text-ink-900">Política de Privacidad</h1>
     <p class="text-sm text-ink-500">Última actualización: <?= date('d/m/Y') ?></p>
 
-    <p>Esta política describe cómo TurneroYa recopila, usa y protege tus datos personales y los de tus clientes finales, en cumplimiento de la Ley 25.326 de Protección de Datos Personales de la República Argentina.</p>
+    <p>Esta política describe cómo Reservia recopila, usa y protege tus datos personales y los de tus clientes finales, en cumplimiento de la Ley 25.326 de Protección de Datos Personales de la República Argentina.</p>
 
     <h2>1. Datos que recopilamos</h2>
     <ul>
@@ -43,10 +43,10 @@
     <p>No vendemos datos a terceros.</p>
 
     <h2>5. Plazo de conservación</h2>
-    <p>Conservamos los datos mientras la cuenta esté activa y hasta 5 años después de su baja, por obligaciones fiscales y contables. Podés solicitar la eliminación anticipada escribiendo a <a href="mailto:privacy@turneroya.app">privacy@turneroya.app</a> (salvo datos que debamos conservar por ley).</p>
+    <p>Conservamos los datos mientras la cuenta esté activa y hasta 5 años después de su baja, por obligaciones fiscales y contables. Podés solicitar la eliminación anticipada escribiendo a <a href="mailto:privacy@reservia.app">privacy@reservia.app</a> (salvo datos que debamos conservar por ley).</p>
 
     <h2>6. Tus derechos (Ley 25.326)</h2>
-    <p>Tenés derecho a acceder, rectificar, actualizar y suprimir tus datos personales, y a retirar tu consentimiento en cualquier momento. Para ejercerlos: <a href="mailto:privacy@turneroya.app">privacy@turneroya.app</a></p>
+    <p>Tenés derecho a acceder, rectificar, actualizar y suprimir tus datos personales, y a retirar tu consentimiento en cualquier momento. Para ejercerlos: <a href="mailto:privacy@reservia.app">privacy@reservia.app</a></p>
     <p>La Agencia de Acceso a la Información Pública es el órgano de control (<a href="https://www.argentina.gob.ar/aaip" target="_blank" rel="noopener">www.argentina.gob.ar/aaip</a>).</p>
 
     <h2>7. Seguridad</h2>
@@ -59,8 +59,8 @@
     <p>El servicio no está dirigido a menores de 18 años. Si detectamos datos de menores sin consentimiento parental, los eliminamos.</p>
 
     <h2>10. Contacto</h2>
-    <p><strong>Responsable:</strong> TurneroYa<br>
-    <strong>Email:</strong> <a href="mailto:privacy@turneroya.app">privacy@turneroya.app</a></p>
+    <p><strong>Responsable:</strong> Reservia<br>
+    <strong>Email:</strong> <a href="mailto:privacy@reservia.app">privacy@reservia.app</a></p>
 </article>
 
 <?php View::endSection(); ?>

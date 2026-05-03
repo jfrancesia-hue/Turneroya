@@ -9,6 +9,7 @@ return function (Router $r): void {
 
     // Landing + páginas públicas
     $r->get('/', 'HomeController@index');
+    $r->get('/health', 'HomeController@health');
     $r->get('/pricing', 'BillingController@pricing');
     $r->get('/terms', 'LegalController@terms');
     $r->get('/privacy', 'LegalController@privacy');

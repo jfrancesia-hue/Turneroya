@@ -6,6 +6,7 @@
 /storage/logs/*.log
 /storage/sessions/*
 /storage/uploads/*
+/storage/pgdata/
 !/storage/logs/.gitkeep
 !/storage/sessions/.gitkeep
 !/storage/uploads/.gitkeep
@@ -14,7 +15,6 @@
 *.log
 .DS_Store
 Thumbs.db
-composer.lock
 .phpunit.cache/
 .phpunit.result.cache
 

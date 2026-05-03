@@ -16,7 +16,9 @@ use TurneroYa\Core\Config;
 use TurneroYa\Models\Booking;
 use TurneroYa\Services\NotificationService;
 
-Dotenv::createImmutable(BASE_PATH)->load();
+if (file_exists(BASE_PATH . '/.env')) {
+    Dotenv::createImmutable(BASE_PATH)->load();
+}
 Config::load(BASE_PATH . '/config');
 date_default_timezone_set((string) Config::get('app.timezone', 'America/Argentina/Buenos_Aires'));
 

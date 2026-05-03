@@ -8,8 +8,8 @@
 ?>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#4F46E5">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234F46E5'/><text x='50' y='68' text-anchor='middle' fill='white' font-size='60' font-family='Arial' font-weight='800'>T</text></svg>">
+<meta name="theme-color" content="#07111F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2307111F'/%3E%3Cpath d='M25 24h50a10 10 0 0 1 10 10v25a10 10 0 0 1-10 10H49L32 82v-13h-7a10 10 0 0 1-10-10V34a10 10 0 0 1 10-10Z' fill='%2300A884'/%3E%3Cpath d='m39 48 8 8 17-20' fill='none' stroke='%23C6F432' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 
 <!-- Tailwind CDN + config -->
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
@@ -23,24 +23,24 @@ tailwind.config = {
             },
             colors: {
                 brand: {
-                    50:  '#EEF2FF',
-                    100: '#E0E7FF',
-                    200: '#C7D2FE',
-                    300: '#A5B4FC',
-                    400: '#818CF8',
-                    500: '#6366F1',
-                    600: '#4F46E5',
-                    700: '#4338CA',
-                    800: '#3730A3',
-                    900: '#312E81',
-                    950: '#1E1B4B',
+                    50:  '#ECFDF5',
+                    100: '#D1FAE5',
+                    200: '#A7F3D0',
+                    300: '#6EE7B7',
+                    400: '#34D399',
+                    500: '#00A884',
+                    600: '#008F72',
+                    700: '#00765F',
+                    800: '#075E54',
+                    900: '#064E45',
+                    950: '#042F2B',
                 },
                 accent: {
-                    50:  '#FAF5FF',
-                    400: '#C084FC',
-                    500: '#A855F7',
-                    600: '#9333EA',
-                    700: '#7E22CE',
+                    50:  '#FFF7ED',
+                    400: '#FFB86B',
+                    500: '#FF8A5B',
+                    600: '#FF6B5A',
+                    700: '#E6493D',
                 },
                 ink: {
                     50:  '#F8FAFC',
@@ -60,14 +60,14 @@ tailwind.config = {
                 'soft':    '0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06)',
                 'elev':    '0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 6px -1px rgb(15 23 42 / 0.04)',
                 'lift':    '0 20px 40px -12px rgb(15 23 42 / 0.15), 0 8px 16px -8px rgb(15 23 42 / 0.1)',
-                'brand':   '0 10px 30px -10px rgb(79 70 229 / 0.45)',
-                'glow':    '0 0 0 4px rgb(79 70 229 / 0.12)',
+                'brand':   '0 10px 30px -10px rgb(0 168 132 / 0.45)',
+                'glow':    '0 0 0 4px rgb(0 168 132 / 0.12)',
             },
             fontSize: {
-                'display-xl': ['5rem', { lineHeight: '1', letterSpacing: '-0.04em', fontWeight: '800' }],
-                'display-lg': ['4rem', { lineHeight: '1.05', letterSpacing: '-0.035em', fontWeight: '800' }],
-                'display-md': ['3rem', { lineHeight: '1.1', letterSpacing: '-0.03em', fontWeight: '800' }],
-                'display-sm': ['2.25rem', { lineHeight: '1.15', letterSpacing: '-0.025em', fontWeight: '700' }],
+                'display-xl': ['5rem', { lineHeight: '1', letterSpacing: '0', fontWeight: '800' }],
+                'display-lg': ['4rem', { lineHeight: '1.05', letterSpacing: '0', fontWeight: '800' }],
+                'display-md': ['3rem', { lineHeight: '1.1', letterSpacing: '0', fontWeight: '800' }],
+                'display-sm': ['2.25rem', { lineHeight: '1.15', letterSpacing: '0', fontWeight: '700' }],
             },
             animation: {
                 'fade-in-up': 'fadeInUp 0.6s ease-out',
@@ -95,8 +95,8 @@ tailwind.config = {
 
 <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
 
-<link rel="stylesheet" href="/assets/css/landing.css?v=6">
-<script defer src="/assets/js/landing.js?v=6"></script>
+<link rel="stylesheet" href="/assets/css/landing.css?v=9">
+<script defer src="/assets/js/landing.js?v=9"></script>
 
 <style>
     html { scroll-behavior: smooth; }
@@ -115,7 +115,7 @@ tailwind.config = {
 
     /* Gradient text utility */
     .text-gradient {
-        background: linear-gradient(135deg, #4F46E5 0%, #A855F7 50%, #EC4899 100%);
+        background: linear-gradient(135deg, #00A884 0%, #C6F432 52%, #FF6B5A 100%);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
@@ -152,5 +152,5 @@ tailwind.config = {
     .btn-press:active { transform: translateY(1px) scale(.98); }
 
     /* Focus ring más premium */
-    .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgb(79 70 229 / 0.15); }
+    .focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgb(0 168 132 / 0.16); }
 </style>

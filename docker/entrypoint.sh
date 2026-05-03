@@ -12,7 +12,7 @@ chown -R www-data:www-data /var/www/html/storage
 # Migraciones automáticas en cada deploy (idempotente: CREATE TABLE IF NOT EXISTS)
 if [ -n "${DB_HOST}" ] && [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
     echo "[entrypoint] Corriendo migraciones..."
-    php /var/www/html/scripts/migrate.php || echo "[entrypoint] Advertencia: migraciones fallaron (continúo)"
+    php /var/www/html/scripts/migrate.php
 fi
 
 # Arranca supervisord → nginx + php-fpm

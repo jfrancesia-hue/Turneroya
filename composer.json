@@ -1,6 +1,6 @@
 {
-    "name": "turneroya/app",
-    "description": "TurneroYa - SaaS de gestión de turnos con IA (Claude) para WhatsApp",
+    "name": "reservia/app",
+    "description": "Reservia - SaaS de gestion de turnos con IA para WhatsApp",
     "type": "project",
     "license": "proprietary",
     "require": {

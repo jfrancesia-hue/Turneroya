@@ -24,7 +24,9 @@ use TurneroYa\Models\Service;
 use TurneroYa\Models\Professional;
 use TurneroYa\Models\Client;
 
-Dotenv::createImmutable(BASE_PATH)->load();
+if (file_exists(BASE_PATH . '/.env')) {
+    Dotenv::createImmutable(BASE_PATH)->load();
+}
 Config::load(BASE_PATH . '/config');
 date_default_timezone_set((string) Config::get('app.timezone', 'America/Argentina/Buenos_Aires'));
 
@@ -37,7 +39,10 @@ try {
                    'schedules', 'professional_services', 'services', 'professionals',
                    'clients'];
         foreach ($tables as $t) {
-            Database::query("DELETE FROM $t");
+            $exists = Database::fetchColumn('SELECT to_regclass(:table_name)', ['table_name' => 'public.' . $t]);
+            if ($exists !== null) {
+                Database::query("DELETE FROM $t");
+            }
         }
         Database::query("DELETE FROM users WHERE email = 'admin@demo.com'");
         Database::query("DELETE FROM businesses WHERE slug = 'belleza-pura'");
@@ -178,6 +183,7 @@ try {
             $endTime = (new \DateTimeImmutable($date->format('Y-m-d') . ' ' . $startTime))
                 ->modify("+$duration minutes")->format('H:i');
 
+            Database::query('SAVEPOINT seed_booking');
             try {
                 Database::insert('bookings', [
                     'business_id' => $businessId,
@@ -191,8 +197,11 @@ try {
                     'source' => $sources[array_rand($sources)],
                     'price' => $services[$sIdx][2],
                 ]);
+                Database::query('RELEASE SAVEPOINT seed_booking');
                 $bookingCount++;
             } catch (\Throwable $e) {
+                Database::query('ROLLBACK TO SAVEPOINT seed_booking');
+                Database::query('RELEASE SAVEPOINT seed_booking');
                 // skip dobles bookings
             }
         }

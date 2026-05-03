@@ -2,31 +2,23 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<title><?= e($title ?? 'Dashboard') ?> · TurneroYa</title>
+<title><?= e($title ?? 'Dashboard') ?> · Reservia</title>
 <?php View::partial('partials/head'); ?>
 <?= View::yield('head') ?>
 </head>
-<body class="bg-ink-50 text-ink-900 antialiased">
-<div x-data="{ sidebarOpen: false }" class="min-h-screen flex">
+<body class="dash-body text-ink-900 antialiased">
+<div x-data="{ sidebarOpen: false }" class="dash-shell min-h-screen flex">
+    <div x-show="sidebarOpen" x-cloak @click="sidebarOpen=false" x-transition.opacity class="lg:hidden fixed inset-0 bg-ink-900/50 backdrop-blur-sm z-30"></div>
 
-    <!-- Overlay mobile -->
-    <div x-show="sidebarOpen" x-cloak @click="sidebarOpen=false" x-transition.opacity class="lg:hidden fixed inset-0 bg-ink-900/40 backdrop-blur-sm z-30"></div>
-
-    <!-- Sidebar -->
-    <aside
-        class="fixed lg:sticky top-0 inset-y-0 left-0 z-40 w-72 bg-white border-r border-ink-200/70 transform lg:transform-none transition-transform duration-200 ease-out flex flex-col h-screen"
-        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
-
-        <!-- Brand -->
-        <div class="h-[72px] flex items-center px-6 border-b border-ink-200/70">
-            <?php View::partial('partials/brand_logo'); ?>
+    <aside class="dash-sidebar fixed lg:sticky top-0 inset-y-0 left-0 z-40 w-72 transform lg:transform-none transition-transform duration-200 ease-out flex flex-col h-screen"
+           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
+        <div class="dash-brand h-[72px] flex items-center px-6">
+            <?php View::partial('partials/brand_logo', ['variant' => 'light']); ?>
         </div>
 
-        <!-- Navigation -->
         <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-6">
             <?php
             $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-
             $groups = [
                 'Operación' => [
                     ['/dashboard', 'Inicio', 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
@@ -50,25 +42,18 @@
             ?>
             <?php foreach ($groups as $groupName => $links): ?>
                 <div>
-                    <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-ink-400"><?= e($groupName) ?></div>
-                    <div class="space-y-0.5">
+                    <div class="dash-nav-label px-3 mb-2 text-[10px] font-bold uppercase"><?= e($groupName) ?></div>
+                    <div class="space-y-1">
                         <?php foreach ($links as $link):
                             [$href, $label, $icon] = $link;
                             $badge = $link[3] ?? null;
                             $active = $href === '/dashboard' ? $currentPath === '/dashboard' : str_starts_with($currentPath, $href);
                         ?>
-                            <a href="<?= e($href) ?>"
-                               class="<?= $active ? 'bg-brand-50 text-brand-700 shadow-soft' : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900' ?> group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition">
-                                <?php if ($active): ?>
-                                    <div class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-brand-600 rounded-r-full"></div>
-                                <?php endif; ?>
-                                <svg class="w-5 h-5 <?= $active ? 'text-brand-600' : 'text-ink-400 group-hover:text-ink-600' ?>" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="<?= $icon ?>"/>
-                                </svg>
+                            <a href="<?= e($href) ?>" class="dash-nav-link <?= $active ? 'is-active' : '' ?> group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition">
+                                <?php if ($active): ?><div class="absolute left-0 top-2 bottom-2 w-0.5 bg-lime-300 rounded-r-full"></div><?php endif; ?>
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="<?= $icon ?>"/></svg>
                                 <span class="flex-1"><?= e($label) ?></span>
-                                <?php if ($badge): ?>
-                                    <span class="px-1.5 py-0.5 rounded-md bg-gradient-to-r from-brand-600 to-accent-600 text-white text-[9px] font-bold tracking-wider"><?= e($badge) ?></span>
-                                <?php endif; ?>
+                                <?php if ($badge): ?><span class="dash-ai-badge"><?= e($badge) ?></span><?php endif; ?>
                             </a>
                         <?php endforeach; ?>
                     </div>
@@ -76,7 +61,6 @@
             <?php endforeach; ?>
         </nav>
 
-        <!-- Bottom: upgrade card (dinámico según plan) -->
         <?php
         $currentPlan = null;
         $currentSub = null;
@@ -84,71 +68,52 @@
             try {
                 $currentPlan = \TurneroYa\Models\Subscription::currentPlanFor(\TurneroYa\Core\Auth::businessId());
                 $currentSub = \TurneroYa\Models\Subscription::activeForBusiness(\TurneroYa\Core\Auth::businessId());
-            } catch (\Throwable $e) { /* tablas aún no migradas */ }
+            } catch (\Throwable $e) {}
         }
         $planName = $currentPlan['name'] ?? 'Free';
-        $showUpgrade = !$currentPlan || ($currentPlan['id'] ?? 'FREE') !== 'NEGOCIO' && ($currentPlan['id'] ?? 'FREE') !== 'MULTI_SUCURSAL';
+        $showUpgrade = !$currentPlan || (($currentPlan['id'] ?? 'FREE') !== 'NEGOCIO' && ($currentPlan['id'] ?? 'FREE') !== 'MULTI_SUCURSAL');
         ?>
-        <div class="p-4 border-t border-ink-200/70">
+        <div class="p-4 dash-sidebar-bottom">
             <?php if ($showUpgrade): ?>
-                <a href="/dashboard/billing" class="block relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-accent-700 p-4 text-white hover:shadow-brand transition">
-                    <div class="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+                <a href="/dashboard/billing" class="dash-upgrade block relative overflow-hidden p-4 text-white transition">
                     <div class="relative">
                         <div class="text-xs font-bold uppercase tracking-wider opacity-80">Plan <?= e($planName) ?></div>
-                        <div class="mt-1 text-sm font-semibold">
-                            <?php if (($currentSub['status'] ?? '') === 'TRIALING'): ?>
-                                Prueba activa
-                            <?php else: ?>
-                                Desbloqueá el Bot IA
-                            <?php endif; ?>
-                        </div>
-                        <div class="mt-3 w-full text-center px-3 py-1.5 bg-white text-brand-700 rounded-lg text-xs font-bold">
-                            Upgrade →
-                        </div>
+                        <div class="mt-1 text-sm font-semibold"><?= ($currentSub['status'] ?? '') === 'TRIALING' ? 'Prueba activa' : 'Desbloqueá el Bot IA' ?></div>
+                        <div class="mt-3 w-full text-center px-3 py-1.5 bg-white text-brand-700 rounded-lg text-xs font-bold">Upgrade →</div>
                     </div>
                 </a>
             <?php else: ?>
-                <a href="/dashboard/billing" class="block rounded-2xl border border-ink-200 p-4 hover:bg-ink-50 transition">
-                    <div class="text-xs font-bold uppercase tracking-wider text-ink-500">Plan <?= e($planName) ?></div>
-                    <div class="mt-1 text-sm font-semibold text-ink-900">Gestionar facturación</div>
+                <a href="/dashboard/billing" class="block rounded-lg border border-white/10 p-4 hover:bg-white/10 transition">
+                    <div class="text-xs font-bold uppercase tracking-wider text-white/50">Plan <?= e($planName) ?></div>
+                    <div class="mt-1 text-sm font-semibold text-white">Gestionar facturación</div>
                 </a>
             <?php endif; ?>
         </div>
     </aside>
 
-    <!-- Main column -->
     <div class="flex-1 min-w-0 flex flex-col">
-        <!-- Topbar -->
-        <header class="sticky top-0 z-20 h-[72px] bg-white/80 backdrop-blur-lg border-b border-ink-200/70 flex items-center justify-between px-4 lg:px-8">
+        <header class="dash-topbar sticky top-0 z-20 h-[72px] flex items-center justify-between px-4 lg:px-8">
             <div class="flex items-center gap-4">
                 <button @click="sidebarOpen=!sidebarOpen" class="lg:hidden w-10 h-10 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-600">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
                 <div>
-                    <h1 class="text-lg font-bold text-ink-900 tracking-tight"><?= e($pageTitle ?? $title ?? '') ?></h1>
-                    <?php if (!empty($pageSubtitle)): ?>
-                        <p class="text-xs text-ink-500"><?= e($pageSubtitle) ?></p>
-                    <?php endif; ?>
+                    <h1 class="text-lg font-bold text-ink-900"><?= e($pageTitle ?? $title ?? '') ?></h1>
+                    <?php if (!empty($pageSubtitle)): ?><p class="text-xs text-ink-500"><?= e($pageSubtitle) ?></p><?php endif; ?>
                 </div>
             </div>
 
             <div class="flex items-center gap-2">
-                <!-- Search -->
-                <button class="hidden md:flex items-center gap-2 px-3 py-2 bg-ink-100 hover:bg-ink-200 rounded-lg text-sm text-ink-500 transition">
+                <a href="/dashboard/bookings/create" class="hidden sm:inline-flex items-center gap-2 px-3 py-2 bg-ink-900 text-white rounded-lg text-sm font-bold hover:bg-brand-700 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6"/></svg>
+                    Nuevo turno
+                </a>
+                <button class="hidden md:flex items-center gap-2 px-3 py-2 bg-white/70 hover:bg-white rounded-lg text-sm text-ink-500 border border-ink-200/70 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <span>Buscar...</span>
-                    <kbd class="px-1.5 py-0.5 text-[10px] bg-white border border-ink-200 rounded">⌘K</kbd>
+                    <span>Buscar</span>
                 </button>
-
-                <!-- Notifications -->
-                <button class="w-10 h-10 rounded-lg hover:bg-ink-100 flex items-center justify-center text-ink-600 relative">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.16V11a6 6 0 00-4-5.66V5a2 2 0 10-4 0v.34C7.67 6.16 6 8.39 6 11v3.16c0 .53-.21 1.05-.59 1.43L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9"/></svg>
-                    <div class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></div>
-                </button>
-
-                <!-- User menu -->
                 <div x-data="{open:false}" class="relative">
-                    <button @click="open=!open" class="flex items-center gap-2.5 pl-1 pr-3 py-1 rounded-xl hover:bg-ink-50 transition">
+                    <button @click="open=!open" class="flex items-center gap-2.5 pl-1 pr-3 py-1 rounded-lg hover:bg-white/70 transition">
                         <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center text-white font-bold text-sm shadow-brand">
                             <?= strtoupper(substr((string) (auth()['name'] ?? 'U'), 0, 1)) ?>
                         </div>
@@ -156,42 +121,27 @@
                             <div class="text-sm font-semibold text-ink-900 leading-tight"><?= e(auth()['name'] ?? 'Usuario') ?></div>
                             <div class="text-[11px] text-ink-500 leading-tight"><?= e(auth()['email'] ?? '') ?></div>
                         </div>
-                        <svg class="hidden sm:block w-4 h-4 text-ink-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                     </button>
-                    <div x-show="open" @click.outside="open=false" x-transition x-cloak class="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lift border border-ink-200/70 py-1.5 z-30">
-                        <a href="/dashboard/settings" class="flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-ink-50">
-                            <svg class="w-4 h-4 text-ink-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.3 4.3a1.7 1.7 0 013.4 0 1.7 1.7 0 002.6 1 1.7 1.7 0 012.4 2.4 1.7 1.7 0 001 2.6 1.7 1.7 0 010 3.4 1.7 1.7 0 00-1 2.6 1.7 1.7 0 01-2.4 2.4 1.7 1.7 0 00-2.6 1 1.7 1.7 0 01-3.4 0 1.7 1.7 0 00-2.6-1 1.7 1.7 0 01-2.4-2.4 1.7 1.7 0 00-1-2.6 1.7 1.7 0 010-3.4 1.7 1.7 0 001-2.6 1.7 1.7 0 012.4-2.4 1.7 1.7 0 002.6-1zM15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            Ajustes
-                        </a>
+                    <div x-show="open" @click.outside="open=false" x-transition x-cloak class="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lift border border-ink-200/70 py-1.5 z-30">
+                        <a href="/dashboard/settings" class="flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-ink-50">Ajustes</a>
                         <div class="my-1 border-t border-ink-100"></div>
                         <form method="POST" action="/logout">
                             <?= csrf_field() ?>
-                            <button type="submit" class="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                                Cerrar sesión
-                            </button>
+                            <button type="submit" class="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50">Cerrar sesión</button>
                         </form>
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- Flash messages -->
         <?php foreach (Session::allFlash() as $type => $msg):
             if ($type === '_old_input') continue; ?>
-            <div class="mx-4 lg:mx-8 mt-6 px-4 py-3 rounded-xl text-sm flex items-start gap-2 <?= $type === 'error' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100' ?>">
-                <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <?php if ($type === 'error'): ?>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.94 4h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"/>
-                    <?php else: ?>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    <?php endif; ?>
-                </svg>
+            <div class="mx-4 lg:mx-8 mt-6 px-4 py-3 rounded-lg text-sm flex items-start gap-2 <?= $type === 'error' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100' ?>">
                 <span><?= e($msg) ?></span>
             </div>
         <?php endforeach; ?>
 
-        <main class="flex-1 p-4 lg:p-8">
+        <main class="dash-main flex-1 p-4 lg:p-8">
             <?= View::yield('content') ?>
         </main>
     </div>

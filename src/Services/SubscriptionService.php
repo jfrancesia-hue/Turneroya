@@ -205,7 +205,7 @@ final class SubscriptionService
         $frequency = $billingCycle === 'YEARLY' ? 12 : 1;
 
         $body = [
-            'reason' => 'TurneroYa - Plan ' . $planName . ' (' . $businessName . ')',
+            'reason' => 'Reservia - Plan ' . $planName . ' (' . $businessName . ')',
             'external_reference' => $subscriptionId,
             'payer_email' => $payerEmail,
             'auto_recurring' => [

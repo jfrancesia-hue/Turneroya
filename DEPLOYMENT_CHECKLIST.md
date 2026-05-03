@@ -1,4 +1,4 @@
-# Deployment Checklist · TurneroYa
+# Deployment Checklist · Reservia
 
 > Lista de pasos manuales para activar el Sprint 1+2 en producción.
 > Tiempo total estimado: **~10 minutos** (sin contar la aprobación Meta de Twilio templates, que es opcional).
@@ -12,7 +12,7 @@
 - [ ] El último commit en `origin/main` es `dde3618` (o más nuevo) — verificá con `git log --oneline -1`
 - [ ] Los tests locales pasan: `composer test` → `OK (89 tests, ...)`
 - [ ] Tenés acceso a:
-  - [ ] Render Dashboard del servicio TurneroYa
+  - [ ] Render Dashboard del servicio Reservia
   - [ ] MercadoPago Developers (https://www.mercadopago.com.ar/developers)
   - [ ] Twilio Console (opcional, para botones)
 
@@ -20,7 +20,7 @@
 
 ## 1 · Render · variables de entorno
 
-Render Dashboard → Service `turneroya` → **Environment** → agregar las siguientes:
+Render Dashboard → Service `reservia` → **Environment** → agregar las siguientes:
 
 ```
 TWILIO_VALIDATE_SIGNATURE=true
@@ -87,7 +87,7 @@ En la misma pantalla de Webhooks:
 
 ## 4 · Render · cron jobs
 
-Render Dashboard → Service `turneroya` → **Jobs** (o **Cron Jobs**) → **New Cron Job**
+Render Dashboard → Service `reservia` → **Jobs** (o **Cron Jobs**) → **New Cron Job**
 
 ### 4a. Expirar pagos pendientes
 

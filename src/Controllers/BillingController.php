@@ -28,12 +28,60 @@ final class BillingController
      */
     public function pricing(): string
     {
-        $plans = Plan::allActive();
+        try {
+            $plans = Plan::allActive();
+        } catch (\Throwable $e) {
+            error_log('[Billing pricing] fallback plans: ' . $e->getMessage());
+            $plans = $this->fallbackPlans();
+        }
+
         return view('billing/pricing', [
             'title' => 'Planes y precios',
             'plans' => $plans,
             'current_plan' => Auth::businessId() ? Subscription::currentPlanFor(Auth::businessId()) : null,
         ]);
+    }
+
+    private function fallbackPlans(): array
+    {
+        return [
+            [
+                'id' => 'FREE',
+                'name' => 'Free',
+                'tagline' => 'Para probar la plataforma sin costo.',
+                'price_monthly' => 0,
+                'price_yearly' => 0,
+                'is_featured' => false,
+                'features' => ['Hasta 50 turnos/mes', 'Pagina publica de reservas', '1 profesional', 'Soporte por email'],
+            ],
+            [
+                'id' => 'STARTER',
+                'name' => 'Starter',
+                'tagline' => 'Para profesionales independientes.',
+                'price_monthly' => 9900,
+                'price_yearly' => 99000,
+                'is_featured' => false,
+                'features' => ['Hasta 500 turnos/mes', '2 profesionales', 'Recordatorios WhatsApp', 'Pagos con MercadoPago'],
+            ],
+            [
+                'id' => 'NEGOCIO',
+                'name' => 'Negocio',
+                'tagline' => 'Con bot IA de WhatsApp para vender mas turnos.',
+                'price_monthly' => 24900,
+                'price_yearly' => 249000,
+                'is_featured' => true,
+                'features' => ['Turnos ilimitados', 'Bot WhatsApp con IA', 'Recordatorios automaticos', 'Analytics completo', 'Soporte prioritario'],
+            ],
+            [
+                'id' => 'MULTI_SUCURSAL',
+                'name' => 'Multi-Sucursal',
+                'tagline' => 'Para equipos, cadenas y franquicias.',
+                'price_monthly' => 59900,
+                'price_yearly' => 599000,
+                'is_featured' => false,
+                'features' => ['Todo lo de Negocio', 'Sucursales multiples', 'Profesionales ilimitados', 'Integraciones custom'],
+            ],
+        ];
     }
 
     /**

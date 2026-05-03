@@ -1,6 +1,6 @@
 <?php
 /**
- * Logo marca TurneroYa. Acepta:
+ * Logo marca Reservia. Acepta:
  *   $variant = 'dark' (default) | 'light'
  *   $size    = 'sm' | 'md' | 'lg'
  */
@@ -8,13 +8,16 @@ $variant = $variant ?? 'dark';
 $size = $size ?? 'md';
 $textColor = $variant === 'light' ? 'text-white' : 'text-ink-900';
 $textSize = ['sm' => 'text-lg', 'md' => 'text-xl', 'lg' => 'text-2xl'][$size] ?? 'text-xl';
-$iconSize = ['sm' => 'w-8 h-8', 'md' => 'w-9 h-9', 'lg' => 'w-11 h-11'][$size] ?? 'w-9 h-9';
+$markSize = ['sm' => 'brand-mark-sm', 'md' => 'brand-mark-md', 'lg' => 'brand-mark-lg'][$size] ?? 'brand-mark-md';
 ?>
-<a href="/" class="flex items-center gap-2.5 <?= $textColor ?> font-bold <?= $textSize ?> tracking-tight">
-    <div class="<?= $iconSize ?> rounded-xl bg-gradient-to-br from-brand-600 via-brand-500 to-accent-500 flex items-center justify-center shadow-brand">
-        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+<a href="/" class="brand-logo <?= $textColor ?> <?= $textSize ?>">
+    <span class="brand-mark <?= $markSize ?>" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+            <path class="brand-bubble" d="M11 8h26c5 0 8 3 8 8v14c0 5-3 8-8 8H24L12 45v-7h-1c-5 0-8-3-8-8V16c0-5 3-8 8-8Z"/>
+            <path class="brand-page" d="M15 15h18a4 4 0 0 1 4 4v12a4 4 0 0 1-4 4H15a4 4 0 0 1-4-4V19a4 4 0 0 1 4-4Z"/>
+            <path class="brand-line" d="M16 22h16"/>
+            <path class="brand-check" d="m17 28 5 5 11-13"/>
         </svg>
-    </div>
-    Turnero<span class="text-brand-600">Ya</span>
+    </span>
+    <span>Reserv<span class="brand-word-accent">ia</span></span>
 </a>
