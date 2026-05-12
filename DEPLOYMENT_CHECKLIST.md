@@ -26,11 +26,13 @@ Render Dashboard → Service `reservia` → **Environment** → agregar las sigu
 TWILIO_VALIDATE_SIGNATURE=true
 MERCADOPAGO_WEBHOOK_SECRET=<lo generamos en el paso 3>
 PAYMENT_EXPIRATION_MINUTES=15
+RUN_MIGRATIONS=false
 ```
 
 > ⚠️ Sin `MERCADOPAGO_WEBHOOK_SECRET`, las firmas no se verifican (modo "permisivo" para rollout gradual). En cuanto tengas el secret del paso 3, pegalo acá.
 
 - [ ] `TWILIO_VALIDATE_SIGNATURE=true` configurada
+- [ ] `RUN_MIGRATIONS=false` configurada (migraciones manuales, con revision previa)
 - [ ] `PAYMENT_EXPIRATION_MINUTES=15` configurada (opcional, default OK)
 
 ---

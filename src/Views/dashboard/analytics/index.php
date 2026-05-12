@@ -13,6 +13,16 @@
         </select>
     </div>
 
+    <div class="grid md:grid-cols-4 gap-4 mb-5">
+        <template x-for="card in moneyCards" :key="card.label">
+            <div class="bg-white rounded-2xl border border-slate-200 p-4">
+                <span class="block text-[10px] font-bold uppercase text-slate-400" x-text="card.label"></span>
+                <strong class="block mt-1 text-xl text-slate-900" x-text="card.value"></strong>
+                <small class="block text-xs text-slate-500" x-text="card.meta"></small>
+            </div>
+        </template>
+    </div>
+
     <div class="grid lg:grid-cols-2 gap-5">
         <div class="bg-white rounded-2xl border border-slate-200 p-5">
             <h3 class="font-semibold text-slate-700 mb-4">Turnos por día</h3>
@@ -38,9 +48,18 @@ let charts = {};
 function analytics() {
     return {
         days: 30,
+        moneyCards: [],
         async load() {
             const res = await fetch('/dashboard/api/analytics/data?days=' + this.days);
             const data = await res.json();
+            const money = data.money || {};
+            const pesos = new Intl.NumberFormat('es-AR', {style:'currency', currency:'ARS', maximumFractionDigits:0});
+            this.moneyCards = [
+                {label:'Ingresos', value: pesos.format(Number(money.revenue || 0)), meta:'confirmados/completados'},
+                {label:'Pérdida estimada', value: pesos.format(Number(money.lost_revenue || 0)), meta:'cancelaciones y no-shows'},
+                {label:'No-shows', value: String(money.no_shows || 0), meta:'en el período'},
+                {label:'Cancelados', value: String(money.cancelled || 0), meta:'en el período'},
+            ];
 
             // Destruir gráficos previos
             Object.values(charts).forEach(c => c && c.destroy());

@@ -12,6 +12,7 @@ use TurneroYa\Models\Service;
 use TurneroYa\Models\Professional;
 use TurneroYa\Models\Booking;
 use TurneroYa\Models\Client;
+use TurneroYa\Core\Database;
 use TurneroYa\Services\SlotCalculator;
 use TurneroYa\Services\BookingService;
 use TurneroYa\Services\NotificationService;
@@ -26,10 +27,18 @@ final class PublicBookingController
             return view('errors/404');
         }
         $services = Service::allByBusiness($business['id'], true);
+        $bookingStats = Database::fetchOne(
+            "SELECT COUNT(*) FILTER (WHERE status IN ('CONFIRMED','COMPLETED')) AS confirmed,
+                    COUNT(DISTINCT client_id) AS clients
+             FROM bookings
+             WHERE business_id = :b",
+            ['b' => $business['id']]
+        ) ?? ['confirmed' => 0, 'clients' => 0];
         return view('public/booking', [
             'title' => 'Reservar en ' . $business['name'],
             'business' => $business,
             'services' => $services,
+            'bookingStats' => $bookingStats,
             'bookingToken' => SignedToken::issue('booking:' . $business['slug']),
         ]);
     }

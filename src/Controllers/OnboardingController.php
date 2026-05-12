@@ -61,14 +61,18 @@ final class OnboardingController
 
         try {
             Database::transaction(function () use ($data, $days) {
+                $typeCopy = $this->typeCopy($data['business_type'], $data['business_name']);
                 // 1) Crear negocio
                 $businessId = Business::create([
                     'name' => $data['business_name'],
                     'slug' => Business::uniqueSlug($data['business_name']),
                     'type' => $data['business_type'],
+                    'description' => $typeCopy['description'],
                     'phone' => $data['phone'],
                     'whatsapp' => $data['whatsapp'],
                     'city' => $data['city'],
+                    'bot_welcome_message' => $typeCopy['welcome'],
+                    'bot_personality' => $typeCopy['personality'],
                 ]);
 
                 // 2) Vincular usuario
@@ -114,5 +118,26 @@ final class OnboardingController
             flash('error', 'Error al guardar: ' . $e->getMessage());
             redirect('/dashboard/onboarding');
         }
+    }
+
+    private function typeCopy(string $type, string $name): array
+    {
+        $label = match ($type) {
+            'SALON' => 'belleza y cuidado personal',
+            'CLINIC' => 'salud y bienestar',
+            'DENTIST' => 'odontología',
+            'VET' => 'veterinaria',
+            'GYM' => 'entrenamiento',
+            'WORKSHOP' => 'servicios técnicos',
+            'LAWYER' => 'consultoría legal',
+            'ACCOUNTANT' => 'consultoría contable',
+            default => 'atención profesional',
+        };
+
+        return [
+            'description' => $name . ' ofrece turnos online para ' . $label . ', con confirmaciones y recordatorios automáticos.',
+            'welcome' => '¡Hola! Soy el asistente de ' . $name . '. Puedo ayudarte a elegir un servicio, buscar horarios y reservar tu turno.',
+            'personality' => 'profesional, clara, cercana y orientada a concretar reservas sin presionar',
+        ];
     }
 }

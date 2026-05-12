@@ -217,8 +217,7 @@ final class WebhookController
             ['n' => $normalized]
         );
         if ($row) return $row;
-        // Fallback: si hay un único negocio en la base, devolverlo (modo single-tenant)
-        return \TurneroYa\Core\Database::fetchOne('SELECT * FROM businesses ORDER BY created_at ASC LIMIT 1');
+        return null;
     }
 
     private function twiml(string $text): void

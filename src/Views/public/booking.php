@@ -41,7 +41,7 @@
             <?php endif; ?>
             <div class="flex items-center gap-1.5">
                 <svg class="w-3.5 h-3.5 text-amber-300" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.1 6.3 7 1-5 4.9 1.2 6.9L12 17.8 5.7 21.1 7 14.2 2 9.3l7-1z"/></svg>
-                4.9 · 124 reseñas
+                <?= (int) ($bookingStats['confirmed'] ?? 0) ?> turnos gestionados
             </div>
         </div>
     </div>

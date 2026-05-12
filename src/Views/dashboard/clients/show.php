@@ -18,7 +18,28 @@
         </form>
     </div>
 
-    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200">
+    <div class="lg:col-span-2 space-y-6">
+        <div class="grid md:grid-cols-4 gap-3">
+            <?php foreach ([
+                ['Riesgo no-show', ($insight['risk_score'] ?? 0) . '%', $insight['risk_label'] ?? 'Bajo'],
+                ['Completados', (string) ($insight['completed'] ?? 0), 'historial'],
+                ['Ausencias', (string) ($insight['no_shows'] ?? 0), 'no-show'],
+                ['Favorito', $insight['favorite_service'] ?? 'Sin dato', 'servicio'],
+            ] as [$label, $value, $meta]): ?>
+                <div class="bg-white rounded-2xl border border-slate-200 p-4">
+                    <span class="block text-[10px] uppercase font-bold text-slate-400"><?= e($label) ?></span>
+                    <strong class="block mt-1 text-lg text-slate-900"><?= e($value) ?></strong>
+                    <small class="block text-xs text-slate-500"><?= e($meta) ?></small>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
+            <span class="text-xs font-bold uppercase text-emerald-700">Siguiente mejor acción</span>
+            <p class="mt-1 text-sm text-emerald-950"><?= e($insight['next_action'] ?? 'Mantener seguimiento automático.') ?></p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200">
         <div class="px-5 py-4 border-b border-slate-200 font-semibold flex items-center justify-between">
             <span>Historial</span>
             <span class="text-xs text-slate-500"><?= count($history) ?> turnos</span>
@@ -38,6 +59,7 @@
                     </div>
                 </div>
             <?php endforeach; endif; ?>
+        </div>
         </div>
     </div>
 </div>

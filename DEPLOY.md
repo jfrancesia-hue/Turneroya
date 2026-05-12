@@ -38,7 +38,13 @@ Las variables marcadas `sync: false` deben cargarse a mano:
 > Produccion no arranca si falta `APP_KEY`, `APP_URL`, credenciales de IA/Twilio/MercadoPago, `MERCADOPAGO_WEBHOOK_SECRET`, `CRON_SECRET` o si `APP_DEBUG` no esta en `false`.
 
 ### Paso 3 — Migraciones
-El `entrypoint.sh` corre `php scripts/migrate.php` automáticamente en cada deploy (idempotente). Al finalizar el primer deploy ya tenés la DB con schema + plans seedados.
+Las migraciones NO corren automaticamente en cada deploy. `RUN_MIGRATIONS=false` queda por defecto para evitar cambios de base no revisados. Antes de ejecutarlas, revisar el diff SQL/backup y correrlas manualmente desde Render Shell:
+
+```bash
+composer migrate
+```
+
+Al finalizar, la DB queda con schema + plans seedados.
 
 Para datos demo opcionales (Nativos Consultora + turnos de ejemplo):
 ```bash

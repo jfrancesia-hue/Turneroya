@@ -94,6 +94,7 @@ return function (Router $r): void {
         $r->post('/api/bookings/available-slots', 'BookingController@availableSlots');
 
         // Analytics
+        $r->get('/growth', 'GrowthController@index');
         $r->get('/analytics', 'AnalyticsController@index');
         $r->get('/api/analytics/data', 'AnalyticsController@data');
 
