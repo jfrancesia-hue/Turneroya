@@ -210,6 +210,18 @@ final class Booking
             ['b' => $businessId, 'd' => $days]
         );
 
-        return compact('byDay', 'topServices', 'peakHours', 'bySource');
+        $money = Database::fetchOne(
+            "SELECT
+                    COALESCE(SUM(COALESCE(b.price, s.price, 0)) FILTER (WHERE b.status IN ('CONFIRMED','COMPLETED')), 0) AS revenue,
+                    COALESCE(SUM(COALESCE(b.price, s.price, 0)) FILTER (WHERE b.status IN ('CANCELLED','NO_SHOW')), 0) AS lost_revenue,
+                    COUNT(*) FILTER (WHERE b.status = 'NO_SHOW') AS no_shows,
+                    COUNT(*) FILTER (WHERE b.status = 'CANCELLED') AS cancelled
+             FROM bookings b
+             LEFT JOIN services s ON s.id = b.service_id
+             WHERE b.business_id = :b AND b.date >= CURRENT_DATE - (:d || ' days')::interval",
+            ['b' => $businessId, 'd' => $days]
+        ) ?? ['revenue' => 0, 'lost_revenue' => 0, 'no_shows' => 0, 'cancelled' => 0];
+
+        return compact('byDay', 'topServices', 'peakHours', 'bySource', 'money');
     }
 }

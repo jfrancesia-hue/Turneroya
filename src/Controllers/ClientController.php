@@ -9,6 +9,7 @@ use TurneroYa\Core\Session;
 use TurneroYa\Core\Validator;
 use TurneroYa\Models\Client;
 use TurneroYa\Models\Booking;
+use TurneroYa\Services\GrowthEngine;
 
 final class ClientController
 {
@@ -48,11 +49,13 @@ final class ClientController
         $client = Client::find($params['id']);
         $this->ensureOwned($client);
         $history = Booking::forClient(Auth::businessId(), $client['id']);
+        $insight = (new GrowthEngine(Auth::businessId()))->clientInsight($client['id']);
         return view('dashboard/clients/show', [
             'title' => $client['name'],
             'pageTitle' => $client['name'],
             'client' => $client,
             'history' => $history,
+            'insight' => $insight,
         ]);
     }
 
