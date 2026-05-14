@@ -43,7 +43,10 @@ final class App
         error_reporting(E_ALL);
         ini_set('display_errors', $debug ? '1' : '0');
         ini_set('log_errors', '1');
-        ini_set('error_log', $this->basePath . '/storage/logs/php-error.log');
+        // En contenedor (Render/Docker) mandamos a stderr para que aparezca en los logs del PaaS;
+        // si no, al archivo de la app.
+        $inContainer = getenv('RENDER') !== false || getenv('DOCKER') !== false || file_exists('/.dockerenv');
+        ini_set('error_log', $inContainer ? 'php://stderr' : $this->basePath . '/storage/logs/php-error.log');
 
         // 5) Sesión
         Session::start();

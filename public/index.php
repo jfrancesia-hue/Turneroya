@@ -19,6 +19,7 @@ try {
     $app->run();
 } catch (\Throwable $e) {
     http_response_code(500);
+    error_log('[500] ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine() . "\n" . $e->getTraceAsString());
     $debug = ($_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG')) === 'true';
     if ($debug) {
         echo '<pre style="background:#1e293b;color:#f8fafc;padding:20px;font-family:monospace;">';
