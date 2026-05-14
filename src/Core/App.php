@@ -78,31 +78,23 @@ final class App
             return;
         }
 
-        $required = [
-            'APP_KEY',
-            'APP_URL',
-            'CRON_SECRET',
-            'ANTHROPIC_API_KEY',
-            'TWILIO_ACCOUNT_SID',
-            'TWILIO_AUTH_TOKEN',
-            'TWILIO_WHATSAPP_FROM',
-            'MERCADOPAGO_ACCESS_TOKEN',
-            'MERCADOPAGO_PUBLIC_KEY',
-            'MERCADOPAGO_WEBHOOK_SECRET',
-        ];
+        // Mínimos no negociables para que la app levante. El resto (Anthropic,
+        // Twilio, MercadoPago, Mail) se validan cuando cada servicio se usa,
+        // así el modo mínimo puede correr landing/auth sin todos los tokens.
+        $required = ['APP_KEY', 'APP_URL'];
 
         $missing = [];
         foreach ($required as $key) {
             $systemValue = getenv($key);
             $value = (string) ($systemValue !== false ? $systemValue : ($_ENV[$key] ?? ''));
-            if ($value === '' || str_contains($value, 'xxxx') || str_contains($value, 'cambiar-en-produccion') || str_starts_with($value, 'TEST-')) {
+            if ($value === '' || str_contains($value, 'cambiar-en-produccion')) {
                 $missing[] = $key;
             }
         }
 
         $systemAppUrl = getenv('APP_URL');
         $appUrl = (string) ($systemAppUrl !== false ? $systemAppUrl : ($_ENV['APP_URL'] ?? ''));
-        if (str_contains($appUrl, 'localhost') || str_contains($appUrl, '127.0.0.1')) {
+        if ($appUrl !== '' && (str_contains($appUrl, 'localhost') || str_contains($appUrl, '127.0.0.1'))) {
             $missing[] = 'APP_URL publico';
         }
 
