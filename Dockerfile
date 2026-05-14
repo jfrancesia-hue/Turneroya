@@ -5,7 +5,7 @@
 FROM composer:2 AS deps
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts --no-progress --optimize-autoloader
+RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts --no-progress --optimize-autoloader --ignore-platform-reqs
 
 # ---- Stage 2: runtime ----
 FROM php:8.2-fpm-alpine AS runtime
