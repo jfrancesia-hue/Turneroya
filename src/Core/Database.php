@@ -32,7 +32,11 @@ final class Database
                 ]);
                 self::$pdo->exec("SET TIME ZONE 'America/Argentina/Buenos_Aires'");
             } catch (PDOException $e) {
-                throw new \RuntimeException('Error al conectar con PostgreSQL: ' . $e->getMessage(), 0, $e);
+                throw new \RuntimeException(
+                    "Error al conectar con PostgreSQL (host={$host}, port={$port}, db={$db}, user={$user}): " . $e->getMessage(),
+                    0,
+                    $e
+                );
             }
         }
         return self::$pdo;
